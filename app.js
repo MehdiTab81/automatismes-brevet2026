@@ -1216,7 +1216,20 @@ function todayIso() {
 }
 
 function getParcours() {
-  try { return JSON.parse(localStorage.getItem(PARCOURS_KEY) || 'null'); } catch(e) { return null; }
+  let p;
+  try { p = JSON.parse(localStorage.getItem(PARCOURS_KEY) || 'null'); } catch(e) { return null; }
+  if (!p) return null;
+  // Migration : si de nouveaux générateurs ont été ajoutés depuis la création du parcours,
+  // on les insère avec un niveau 0 pour qu'ils tombent en séance.
+  let added = 0;
+  Object.values(QUESTION_BANK).flat().forEach(gen => {
+    if (!(gen.name in p.skills)) {
+      p.skills[gen.name] = { level: 0, dueDay: 1, lastSeenDay: null, history: [] };
+      added++;
+    }
+  });
+  if (added > 0) setParcours(p);
+  return p;
 }
 function setParcours(p) { localStorage.setItem(PARCOURS_KEY, JSON.stringify(p)); }
 

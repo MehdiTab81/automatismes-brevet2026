@@ -1093,6 +1093,98 @@ function t3_identite_remarquable() {
   };
 }
 
+/* ------------------------------------------------------------------
+   Double distributivité — attendu Brevet 2025 p.3 :
+   "Il développe (par simple et double distributivités)."
+   Exemple : (2x - 3)(5x + 7)
+   ------------------------------------------------------------------ */
+function t3_double_distrib() {
+  // (ax + b)(cx + d) = a*c x² + (a*d + b*c) x + b*d
+  const cases = [
+    { a: 2, b: 3, c: 1, d: 4 },    // (2x+3)(x+4) = 2x² + 11x + 12
+    { a: 1, b: 5, c: 2, d: -3 },   // (x+5)(2x-3) = 2x² + 7x - 15
+    { a: 3, b: -2, c: 1, d: 5 },   // (3x-2)(x+5) = 3x² + 13x - 10
+    { a: 2, b: 1, c: 3, d: -4 },   // (2x+1)(3x-4) = 6x² - 5x - 4
+    { a: 1, b: -2, c: 1, d: 7 },   // (x-2)(x+7) = x² + 5x - 14
+    { a: 4, b: -1, c: 2, d: 3 },   // (4x-1)(2x+3) = 8x² + 10x - 3
+    { a: 2, b: -5, c: 1, d: -3 }   // (2x-5)(x-3) = 2x² - 11x + 15
+  ];
+  const k = pick(cases);
+  const x2Coef = k.a * k.c;
+  const xCoef = k.a * k.d + k.b * k.c;
+  const cst = k.b * k.d;
+  const fmt = n => (n > 0 ? '+ ' + n : '- ' + Math.abs(n));
+  const fmtFirst = n => (n === 1 ? '' : n === -1 ? '-' : String(n));
+  const fmtCoefB = b => (b > 0 ? '+ ' + b : '- ' + Math.abs(b));
+  const fmtCoefD = d => (d > 0 ? '+ ' + d : '- ' + Math.abs(d));
+  const expr = `(${fmtFirst(k.a)}x ${fmtCoefB(k.b)})(${fmtFirst(k.c)}x ${fmtCoefD(k.d)})`;
+  const dev = `${x2Coef === 1 ? '' : x2Coef}x^2 ${fmt(xCoef)}x ${fmt(cst)}`;
+  // Distracteurs plausibles : erreurs classiques
+  const distractors = [
+    `${x2Coef === 1 ? '' : x2Coef}x^2 + ${cst}`,                             // oubli du terme en x
+    `${x2Coef === 1 ? '' : x2Coef}x^2 ${fmt(k.a * k.d)}x ${fmt(cst)}`,       // n'a pas ajouté bc
+    `${x2Coef === 1 ? '' : x2Coef}x^2 ${fmt(k.b * k.c)}x ${fmt(cst)}`        // n'a pas ajouté ad
+  ].filter(s => s !== dev);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${dev}\\)`, correct: true },
+    ...distractors.slice(0, 3).map(d => ({ html: `\\(${d}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'algebre', title: 'Développer (double distributivité)',
+    body: `Développer et réduire : \\(${expr}\\).`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Double distributivité : \\((a+b)(c+d) = ac + ad + bc + bd\\).<br>\\(${expr} = ${k.a*k.c}x^2 ${fmt(k.a*k.d)}x ${fmt(k.b*k.c)}x ${fmt(cst)} = ${dev}\\).`,
+    help: {
+      cours: "<b>Double distributivité</b> : \\((a+b)(c+d) = ac + ad + bc + bd\\). On multiplie chaque terme de la 1<sup>re</sup> parenthèse par chaque terme de la 2<sup>e</sup>.",
+      savoirFaire: "Appliquer systématiquement les 4 produits, puis réduire les termes semblables (en \\(x\\)).",
+      erreurs: ["Oublier un produit (il en faut 4).", "Oublier de réduire les termes en \\(x\\).", "Se tromper de signe."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Factoriser a² - b² — attendu Brevet 2025 p.3 :
+   "Il factorise une expression du type a² - b²."
+   Exemples : x² - 49 = (x-7)(x+7), 4x² - 9 = (2x-3)(2x+3)
+   ------------------------------------------------------------------ */
+function t3_factoriser_a2_b2() {
+  // x² - b² ou (ax)² - b²
+  const cases = [
+    { a: 1, b: 7, expr: 'x^2 - 49', facto: '(x - 7)(x + 7)' },
+    { a: 1, b: 3, expr: 'x^2 - 9', facto: '(x - 3)(x + 3)' },
+    { a: 1, b: 5, expr: 'x^2 - 25', facto: '(x - 5)(x + 5)' },
+    { a: 1, b: 8, expr: 'x^2 - 64', facto: '(x - 8)(x + 8)' },
+    { a: 1, b: 10, expr: 'x^2 - 100', facto: '(x - 10)(x + 10)' },
+    { a: 2, b: 3, expr: '4x^2 - 9', facto: '(2x - 3)(2x + 3)' },
+    { a: 2, b: 7, expr: '4x^2 - 49', facto: '(2x - 7)(2x + 7)' },
+    { a: 3, b: 2, expr: '9x^2 - 4', facto: '(3x - 2)(3x + 2)' },
+    { a: 5, b: 1, expr: '25x^2 - 1', facto: '(5x - 1)(5x + 1)' }
+  ];
+  const k = pick(cases);
+  // Distracteurs classiques : oublier le carré, confondre les signes, mauvais découpage
+  const distractors = [
+    `(x - ${k.b})^2`,
+    `(x + ${k.b})^2`,
+    `(${k.a === 1 ? '' : k.a}x - ${k.b})^2`,
+    `${k.a === 1 ? '' : k.a}(x - ${k.b})(x + ${k.b})`
+  ].filter(d => d !== k.facto);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${k.facto}\\)`, correct: true },
+    ...shuffle(distractors).slice(0, 3).map(d => ({ html: `\\(${d}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'algebre', title: 'Factoriser a² − b²',
+    body: `Factoriser : \\(${k.expr}\\).`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Identité remarquable : \\(a^2 - b^2 = (a-b)(a+b)\\). Ici \\(a = ${k.a === 1 ? 'x' : k.a + 'x'}\\) et \\(b = ${k.b}\\). Donc \\(${k.expr} = ${k.facto}\\).`,
+    help: {
+      cours: "<b>Identité remarquable</b> : \\(a^2 - b^2 = (a-b)(a+b)\\) — « différence de deux carrés ».",
+      savoirFaire: "1) Repérer les deux carrés (ex. \\(x^2\\) et \\(49 = 7^2\\)). 2) Écrire \\((a-b)(a+b)\\).",
+      erreurs: ["Écrire \\((x-7)^2\\) au lieu de \\((x-7)(x+7)\\).", "Se tromper sur la racine carrée (ex. \\(\\sqrt{49} = 7\\)).", "Oublier un des deux facteurs."]
+    }
+  };
+}
+
 /* ==========================================================================
    THÈME 4 — FONCTIONS & LECTURE GRAPHIQUE
    ========================================================================== */
@@ -4215,7 +4307,7 @@ const QUESTION_BANK = {
   calcul:       [ t1_priorites, t1_fraction_entier, t1_somme_fractions, t1_produit_fractions, t1_puissance, t1_puissance_10, t1_ecriture_sci, t1_op_ecriture_sci, t1_racine_carre_parfait, t1_racine_encadrement, t1_racine_arrondi ],
   arithmetique: [ t1_pgcd, t1_ppcm, t1_frac_irred, t1_divisibilite, t1_nombre_premier, t1_decomposition_premiers, t1_probleme_pgcd ],
   pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion, t2_coef_multiplicateur, t2_coef_mult_application, t2_evolutions_successives, t2_echelle_carte ],
-  algebre:    [ t3_equation, t3_developpe, t3_factoriser, t3_image, t3_equivalence_equation, t3_identite_remarquable, t3_equation_produit, t3_equation_x_carre, t3_oppose_expression ],
+  algebre:    [ t3_equation, t3_developpe, t3_double_distrib, t3_factoriser, t3_factoriser_a2_b2, t3_image, t3_equivalence_equation, t3_identite_remarquable, t3_equation_produit, t3_equation_x_carre, t3_oppose_expression ],
   fonctions:  [ t4_image_lineaire, t4_coefficient_lin, t4_fonction_affine, t4_lecture_graphique, t4_intersection_droites, t4_ab_graphique, t4_modelisation, t4_antecedent_algebrique, t4_notation_fonction, t4_signe_a_b_allure ],
   geometrie:  [
     t5_pythagore_hypotenuse, t5_pythagore_cote, t5_pythagore_reciproque,
