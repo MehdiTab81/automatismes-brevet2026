@@ -3099,6 +3099,16 @@ initThemes();
 initKeyboard();
 initDuel();
 refreshStudentBadge();
+
+/* Service Worker — permet l'installation en PWA et le fonctionnement hors-ligne.
+   Enregistrement silencieux : pas d'erreur visible pour l'élève si ça échoue. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('[PWA] SW registration failed:', err);
+    });
+  });
+}
 // Bandeau d'invitation au 1er lancement (non bloquant)
 if (!getStudent() && !localStorage.getItem('auto3br.welcome-dismissed')) {
   setTimeout(showWelcomeBanner, 400);
