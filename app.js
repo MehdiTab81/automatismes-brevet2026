@@ -293,14 +293,34 @@ function renderRevision() {
               <div class="fc-hint">Clique pour voir la fiche →</div>
             </div>
             <div class="flashcard-face flashcard-back">
-              <h5>Cours</h5>
-              <div>${q.help.cours}</div>
-              <h5>Savoir-faire</h5>
-              <div>${q.help.savoirFaire}</div>
-              <h5>Erreurs à éviter</h5>
-              <ul>${q.help.erreurs.map(e => `<li>${e}</li>`).join('')}</ul>
-              <button class="fc-practice-btn" data-gen="${gen.name}">⚡ S'entraîner sur cette compétence</button>
-              ${REDACTION_FOR_GEN[gen.name] ? `<button class="fc-practice-btn" style="background:#ec4899;margin-top:4px;" data-redaction="${REDACTION_FOR_GEN[gen.name]}">✍️ S'entraîner à rédiger</button>` : ''}
+              <div class="fc-back-title">
+                <span class="flashcard-icon" style="background:${meta.color};">${meta.icon}</span>
+                <span>${q.title}</span>
+              </div>
+
+              <div class="fc-block fc-block-cours">
+                <div class="fc-block-head">📘 L'essentiel</div>
+                <div class="fc-block-body">${q.help.cours}</div>
+              </div>
+
+              <div class="fc-block fc-block-example">
+                <div class="fc-block-head">💡 Exemple résolu</div>
+                <div class="fc-block-body">
+                  <div class="fc-example-q">${q.body}</div>
+                  <div class="fc-example-arrow">↓</div>
+                  <div class="fc-example-a">${q.solution}</div>
+                </div>
+              </div>
+
+              <div class="fc-block fc-block-trap">
+                <div class="fc-block-head">⚠️ Piège à éviter</div>
+                <div class="fc-block-body">${q.help.erreurs[0] || ''}</div>
+              </div>
+
+              <div class="fc-back-actions">
+                <button class="fc-practice-btn" data-gen="${gen.name}">⚡ S'entraîner</button>
+                ${REDACTION_FOR_GEN[gen.name] ? `<button class="fc-practice-btn fc-redaction-btn" data-redaction="${REDACTION_FOR_GEN[gen.name]}">✍️ Rédiger</button>` : ''}
+              </div>
             </div>
           </div>
         </div>
