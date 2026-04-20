@@ -696,6 +696,29 @@ body[data-theme="dark"] .flashcard.viewed .flashcard-front::before {
 .revision-theme-count.partial { background: var(--warn-soft); color: var(--warn); }
 .revision-theme-count.complete { background: var(--ok-soft); color: var(--ok); }
 
+/* Toolbar Fiches : tout ouvrir / fermer */
+.revision-toolbar {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 12px 0;
+}
+
+/* Pastille de compteur dans les thèmes de S'entraîner */
+.theme-pill .pill-count {
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.1);
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  min-width: 22px;
+  text-align: center;
+}
+body[data-theme="dark"] .theme-pill .pill-count {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 /* Tableau à double entrée (probabilités 2 épreuves) */
 .proba-table {
   border-collapse: collapse;

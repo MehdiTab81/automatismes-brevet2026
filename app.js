@@ -50,13 +50,17 @@ function initTabs() {
 function initThemes() {
   const list = $('#themes-list');
   if (!list) return; // onglet "S'évaluer" simplifié : pas de liste de thèmes
-  list.innerHTML = Object.entries(THEME_META).map(([id, meta]) => `
+  list.innerHTML = Object.entries(THEME_META).map(([id, meta]) => {
+    const count = (QUESTION_BANK[id] || []).length;
+    return `
     <label class="theme-pill selected" data-theme="${id}" style="color: ${meta.color};">
       <input type="checkbox" name="theme" value="${id}" checked />
       <span class="pill-icon" style="background: ${meta.color};">${meta.icon}</span>
       <span class="pill-label">${meta.short}</span>
+      <span class="pill-count">${count}</span>
     </label>
-  `).join('');
+  `;
+  }).join('');
   // Le <label> toggle l'input automatiquement ; on ne fait que synchroniser la classe visuelle
   $$('.theme-pill').forEach(pill => {
     const input = pill.querySelector('input');
@@ -145,6 +149,10 @@ function initA11y() {
   btnOpen.addEventListener('click', () => { syncFormFromPrefs(); modal.hidden = false; });
   btnClose.addEventListener('click', () => { modal.hidden = true; });
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.hidden = true; });
+  // A4 : touche Échap ferme la modale
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) modal.hidden = true;
+  });
 
   btnApply.addEventListener('click', () => {
     const p = collectPrefs();
@@ -273,6 +281,10 @@ function renderRevision() {
     <input type="text" id="revision-search-input" placeholder="🔎 Rechercher une compétence (ex. Thalès, volume, pourcentage...)" autocomplete="off" />
     <button type="button" class="ghost small search-clear" id="revision-search-clear">Effacer</button>
   </div>
+  <div class="revision-toolbar">
+    <button type="button" class="ghost small" id="btn-expand-all">📖 Tout ouvrir</button>
+    <button type="button" class="ghost small" id="btn-collapse-all">📕 Tout fermer</button>
+  </div>
   <div id="revision-empty" class="revision-empty" style="display:none;">Aucune compétence ne correspond à cette recherche.</div>`;
 
   const html = intro + Object.entries(QUESTION_BANK).map(([themeId, gens]) => {
@@ -341,19 +353,28 @@ function renderRevision() {
   }).join('');
   container.innerHTML = html;
 
-  // Accordéon : clic sur header
+  // Accordéon : clic sur header (plusieurs thèmes peuvent être ouverts simultanément)
   container.querySelectorAll('.revision-theme-header').forEach(h => {
     h.addEventListener('click', () => {
       const theme = h.closest('.revision-theme');
       const wasOpen = theme.classList.contains('open');
-      // Fermer les autres (1 seul ouvert à la fois)
-      container.querySelectorAll('.revision-theme.open').forEach(t => t.classList.remove('open'));
+      theme.classList.toggle('open');
       if (!wasOpen) {
-        theme.classList.add('open');
         // Trigger MathJax render on the now-visible cards
         setTimeout(() => renderMath(theme.querySelector('.revision-theme-body')), 50);
       }
     });
+  });
+
+  // A1 : boutons "Tout ouvrir" / "Tout fermer"
+  $('#btn-expand-all')?.addEventListener('click', () => {
+    container.querySelectorAll('.revision-theme').forEach(t => {
+      t.classList.add('open');
+      setTimeout(() => renderMath(t.querySelector('.revision-theme-body')), 50);
+    });
+  });
+  $('#btn-collapse-all')?.addEventListener('click', () => {
+    container.querySelectorAll('.revision-theme.open').forEach(t => t.classList.remove('open'));
   });
 
   // Clic sur flashcard → flip (sauf si clic sur bouton)
