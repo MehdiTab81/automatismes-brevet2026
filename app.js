@@ -530,13 +530,197 @@ function refreshStudentBadge() {
   const wrap = $('#student-badge');
   if (!wrap) return;
   if (st) {
-    wrap.innerHTML = `<span class="student-chip">${st.prenom} · ${st.classe}</span>
+    wrap.innerHTML = `<span class="student-chip" id="btn-profile-menu" role="button" title="Mon profil">${st.prenom} · ${st.classe}</span>
                       <button class="icon-btn" id="btn-history" title="Historique" aria-label="Historique">📊</button>`;
     $('#btn-history').addEventListener('click', () => showHistory());
+    $('#btn-profile-menu').addEventListener('click', () => showProfileMenu());
   } else {
     wrap.innerHTML = `<button class="icon-btn" id="btn-login" title="Se connecter">👤</button>`;
     $('#btn-login').addEventListener('click', () => showLogin());
   }
+}
+
+/* ==========================================================================
+   EXPORT / IMPORT de la progression (JSON)
+   Permet à l'élève de transférer sa progression d'un appareil à l'autre
+   sans backend. 100 % local, 100 % RGPD.
+   ========================================================================== */
+const EXPORT_VERSION = 1;
+const EXPORT_APP = 'automatismes-brevet-3eme';
+const EXPORT_REMINDER_KEY = 'auto3br.export.lastReminder';
+const EXPORT_LAST_EXPORT_KEY = 'auto3br.export.lastExportAt';
+const EXPORT_KEYS = [
+  'auto3br.student',
+  'auto3br.history',
+  'auto3br.parcours',
+  'auto3br.duel.players',
+  'auto3br.rev.viewed',
+  'auto3br.a11y'
+];
+
+function buildExportPayload() {
+  const data = {};
+  EXPORT_KEYS.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v !== null) {
+      try { data[k] = JSON.parse(v); } catch(e) { data[k] = v; }
+    }
+  });
+  const st = getStudent() || {};
+  return {
+    version: EXPORT_VERSION,
+    app: EXPORT_APP,
+    exportedAt: new Date().toISOString(),
+    student: st,
+    data
+  };
+}
+
+function exportProgression() {
+  const payload = buildExportPayload();
+  const st = payload.student;
+  const safe = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const datePart = new Date().toISOString().slice(0, 10);
+  const fileName = `auto3br-${safe(st.prenom) || 'anonyme'}-${safe(st.classe) || 'classe'}-${datePart}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  localStorage.setItem(EXPORT_LAST_EXPORT_KEY, Date.now().toString());
+  return fileName;
+}
+
+function importProgression(file, onDone) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if (payload.app !== EXPORT_APP) {
+        alert('Ce fichier ne vient pas de ce site (champ "app" invalide).');
+        return;
+      }
+      if (!payload.data || typeof payload.data !== 'object') {
+        alert('Fichier invalide : aucune donnée trouvée.');
+        return;
+      }
+      const before = {};
+      EXPORT_KEYS.forEach(k => { before[k] = localStorage.getItem(k); });
+      // Restauration
+      let restoredKeys = 0, sessionsCount = 0;
+      Object.entries(payload.data).forEach(([k, v]) => {
+        if (!EXPORT_KEYS.includes(k)) return; // ignore keys inconnues
+        localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+        restoredKeys++;
+        if (k === 'auto3br.history' && Array.isArray(v)) sessionsCount = v.length;
+      });
+      const exportedAt = payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('fr-FR') : '—';
+      alert(`✅ Progression restaurée\n\n• ${restoredKeys} jeux de données importés\n• ${sessionsCount} séance(s) dans l'historique\n• Export initial : ${exportedAt}\n\nLa page va se recharger.`);
+      location.reload();
+    } catch (e) {
+      alert("Erreur à la lecture du fichier : " + e.message);
+    }
+    if (onDone) onDone();
+  };
+  reader.readAsText(file);
+}
+
+/* Menu profil — accessible en cliquant sur le nom dans le header */
+function showProfileMenu() {
+  const st = getStudent();
+  if (!st) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  const lastExport = localStorage.getItem(EXPORT_LAST_EXPORT_KEY);
+  const lastExportStr = lastExport
+    ? new Date(parseInt(lastExport)).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : 'jamais';
+  modal.innerHTML = `
+    <div class="modal profile-modal">
+      <h3>${st.prenom} · ${st.classe}</h3>
+      <p class="note" style="margin-top:-4px;">Ton profil reste sur cet appareil. Pour le transférer sur un autre appareil (ordinateur, tablette, téléphone), utilise les boutons ci-dessous.</p>
+
+      <div class="profile-section">
+        <h4>📥 Sauvegarde & transfert</h4>
+        <p class="note" style="margin:4px 0 8px 0;font-size:0.85rem;">Dernière sauvegarde : <strong>${lastExportStr}</strong></p>
+        <button class="primary" id="btn-export-prog" style="width:100%;">💾 Exporter ma progression</button>
+        <p class="note" style="margin:6px 0;font-size:0.8rem;">Télécharge un fichier <code>.json</code>. Envoie-le-toi par mail, ou mets-le sur clé USB.</p>
+        <button class="ghost" id="btn-import-prog" style="width:100%;margin-top:8px;">📂 Importer une progression</button>
+        <input type="file" id="fld-import-file" accept=".json,application/json" style="display:none;" />
+        <p class="note" style="margin:6px 0;font-size:0.8rem;">Restaure une progression exportée depuis un autre appareil.</p>
+      </div>
+
+      <div class="profile-section">
+        <h4>⚙ Profil</h4>
+        <button class="ghost" id="btn-edit-profile" style="width:100%;">✏️ Modifier prénom / classe</button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="ghost" id="btn-profile-close">Fermer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  $('#btn-profile-close').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  $('#btn-export-prog').addEventListener('click', () => {
+    const fileName = exportProgression();
+    alert(`✅ Fichier "${fileName}" téléchargé !\n\nConseil : envoie-toi ce fichier par mail ou messagerie pour pouvoir le récupérer sur un autre appareil.`);
+    close();
+  });
+
+  const fldFile = $('#fld-import-file');
+  $('#btn-import-prog').addEventListener('click', () => fldFile.click());
+  fldFile.addEventListener('change', () => {
+    const file = fldFile.files[0];
+    if (!file) return;
+    if (!confirm(`⚠️ Importer "${file.name}" va remplacer ta progression actuelle.\n\nContinuer ?`)) {
+      fldFile.value = '';
+      return;
+    }
+    importProgression(file, () => { fldFile.value = ''; });
+  });
+
+  $('#btn-edit-profile').addEventListener('click', () => {
+    close();
+    showLogin(st);
+  });
+}
+
+/* Rappel automatique : si l'élève a fait 5+ séances sans export, on lui suggère
+   de sauvegarder (non bloquant). Affiché au plus une fois par semaine. */
+function maybeRemindExport() {
+  const st = getStudent();
+  if (!st) return;
+  const sessions = getSessions();
+  if (!sessions || sessions.length < 5) return;
+  const lastExport = parseInt(localStorage.getItem(EXPORT_LAST_EXPORT_KEY) || '0');
+  const sessionsSince = sessions.filter(s => new Date(s.date).getTime() > lastExport).length;
+  if (sessionsSince < 5) return;
+  const lastReminder = parseInt(localStorage.getItem(EXPORT_REMINDER_KEY) || '0');
+  const oneWeek = 7 * 24 * 3600 * 1000;
+  if (Date.now() - lastReminder < oneWeek) return;
+  localStorage.setItem(EXPORT_REMINDER_KEY, Date.now().toString());
+  // Bandeau non bloquant
+  const bar = document.createElement('div');
+  bar.className = 'export-reminder';
+  bar.innerHTML = `
+    <span>💾 <strong>Pense à sauvegarder ta progression !</strong> Tu as fait ${sessionsSince} séances depuis la dernière sauvegarde.</span>
+    <button class="primary small" id="btn-reminder-export">Sauvegarder</button>
+    <button class="ghost small" id="btn-reminder-close">Plus tard</button>`;
+  document.body.appendChild(bar);
+  const close = () => bar.remove();
+  $('#btn-reminder-close').addEventListener('click', close);
+  $('#btn-reminder-export').addEventListener('click', () => {
+    const fileName = exportProgression();
+    alert(`✅ Fichier "${fileName}" téléchargé !`);
+    close();
+  });
 }
 
 /* Fenêtre login simple */
@@ -1049,6 +1233,8 @@ function isAnswerCorrect(q, a) {
 function finishTest() {
   clearInterval(state.timer);
   document.body.classList.remove('evaluating');
+  // Rappel export progression (si élève connecté et 5+ séances depuis dernier export)
+  setTimeout(() => { try { maybeRemindExport(); } catch(e){} }, 800);
   const score = state.answers.reduce((s, a, i) =>
     s + (isAnswerCorrect(state.series[i], a) ? 1 : 0), 0);
   const withHelp = state.answers.filter(a => a.helped).length;

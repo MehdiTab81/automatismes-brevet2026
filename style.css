@@ -886,6 +886,64 @@ body[data-theme="dark"] .a11y-row select {
 .btn-speak:hover { background: var(--accent, #6366f1); color: white; }
 .btn-speak.speaking { background: #10b981; color: white; border-color: #10b981; }
 
+/* Badge élève cliquable */
+.student-chip {
+  cursor: pointer;
+  user-select: none;
+}
+.student-chip:hover { opacity: 0.85; }
+
+/* Modale profil — sections */
+.profile-modal h4 {
+  margin: 14px 0 8px 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.profile-section {
+  margin: 12px 0;
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  border-radius: 10px;
+}
+.profile-section h4 { margin-top: 0; }
+
+/* Bandeau de rappel export */
+.export-reminder {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg, white);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 9998;
+  max-width: 560px;
+  font-size: 0.9rem;
+  animation: slideUp 300ms ease-out;
+}
+@keyframes slideUp {
+  from { transform: translate(-50%, 30px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+.export-reminder button {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.export-reminder button.small { padding: 4px 10px; font-size: 0.8rem; }
+@media (max-width: 560px) {
+  .export-reminder {
+    flex-direction: column;
+    width: calc(100% - 32px);
+  }
+  .export-reminder span { text-align: center; }
+}
+
 /* Histogramme SVG */
 .histogram-container {
   margin: 12px auto;
