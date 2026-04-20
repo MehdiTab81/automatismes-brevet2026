@@ -643,6 +643,67 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   color: var(--ink-2);
 }
 
+/* Barre de recherche */
+.revision-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.revision-search input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 0.95rem;
+  background: var(--bg-elev);
+  color: var(--ink);
+  font-family: inherit;
+  transition: border-color var(--t-fast);
+}
+.revision-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.revision-search .search-clear {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+/* Fiches consultées */
+.flashcard.viewed .flashcard-front::before {
+  content: '✓';
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  color: var(--ok);
+  font-weight: 800;
+  font-size: 1rem;
+  background: white;
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  z-index: 2;
+}
+body[data-theme="dark"] .flashcard.viewed .flashcard-front::before {
+  background: var(--bg-elev);
+}
+
+/* Compteur dans l'en-tête de thème */
+.revision-theme-count.partial { background: var(--warn-soft); color: var(--warn); }
+.revision-theme-count.complete { background: var(--ok-soft); color: var(--ok); }
+
+/* État « aucun résultat » */
+.revision-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .revision-theme {
   background: var(--bg-elev);
   border: 1px solid var(--border);

@@ -108,12 +108,47 @@ const REDACTION_FOR_GEN = {
   t6_ecrire_rapport: 'trigo_cote'
 };
 
+/* Fiches consultées — stockées localement */
+const REV_VIEWED_KEY = 'auto3br.rev.viewed';
+function getViewedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(REV_VIEWED_KEY) || '[]')); } catch(e) { return new Set(); }
+}
+function markAsViewed(genName) {
+  const s = getViewedSet();
+  s.add(genName);
+  localStorage.setItem(REV_VIEWED_KEY, JSON.stringify([...s]));
+  // Mettre à jour l'UI en direct
+  const card = document.querySelector(`.flashcard[data-gen="${genName}"]`);
+  if (card) card.classList.add('viewed');
+  updateThemeCounts();
+}
+function updateThemeCounts() {
+  const viewed = getViewedSet();
+  document.querySelectorAll('.revision-theme').forEach(t => {
+    const theme = t.dataset.theme;
+    const gens = QUESTION_BANK[theme] || [];
+    const seen = gens.filter(g => viewed.has(g.name)).length;
+    const total = gens.length;
+    const countEl = t.querySelector('.revision-theme-count');
+    if (!countEl) return;
+    countEl.textContent = `${seen}/${total}`;
+    countEl.classList.remove('partial', 'complete');
+    if (seen === total && total > 0) countEl.classList.add('complete');
+    else if (seen > 0) countEl.classList.add('partial');
+  });
+}
+
 /* ---------- Fiche de révision (accordéon + flashcards 3D) ---------- */
 function renderRevision() {
   const container = $('#revision-content');
-  if (container.dataset.built === '1') return;
+  if (container.dataset.built === '1') { updateThemeCounts(); return; }
 
-  const intro = `<div class="revision-intro">💡 <strong>Comment utiliser ces fiches ?</strong> Clique sur un thème pour ouvrir ses cartes. Chaque carte se retourne au clic pour révéler le cours, le savoir-faire et les erreurs à éviter. Le bouton « S'entraîner » lance une question immédiate.</div>`;
+  const intro = `<div class="revision-intro">💡 <strong>Comment utiliser ces fiches ?</strong> Clique sur un thème pour ouvrir ses cartes. Chaque carte se retourne au clic. Un ✓ apparaît sur les cartes déjà consultées. Les compteurs en haut à droite indiquent ta progression.</div>
+  <div class="revision-search">
+    <input type="text" id="revision-search-input" placeholder="🔎 Rechercher une compétence (ex. Thalès, volume, pourcentage...)" autocomplete="off" />
+    <button type="button" class="ghost small search-clear" id="revision-search-clear">Effacer</button>
+  </div>
+  <div id="revision-empty" class="revision-empty" style="display:none;">Aucune compétence ne correspond à cette recherche.</div>`;
 
   const html = intro + Object.entries(QUESTION_BANK).map(([themeId, gens]) => {
     const meta = THEME_META[themeId];
@@ -177,12 +212,43 @@ function renderRevision() {
   });
 
   // Clic sur flashcard → flip (sauf si clic sur bouton)
+  // Appliquer la classe "viewed" aux cartes déjà consultées
+  const viewed = getViewedSet();
   container.querySelectorAll('.flashcard').forEach(card => {
+    if (viewed.has(card.dataset.gen)) card.classList.add('viewed');
     card.addEventListener('click', e => {
-      if (e.target.closest('.fc-practice-btn')) return; // laisser le bouton agir
+      if (e.target.closest('.fc-practice-btn')) return;
       card.classList.toggle('flipped');
+      // Marquer comme consultée dès le 1er flip
+      if (card.classList.contains('flipped')) markAsViewed(card.dataset.gen);
     });
   });
+  updateThemeCounts();
+
+  // Barre de recherche
+  const searchInp = $('#revision-search-input');
+  const searchClear = $('#revision-search-clear');
+  const emptyEl = $('#revision-empty');
+  const applySearch = () => {
+    const q = searchInp.value.trim().toLowerCase();
+    let visibleCount = 0;
+    container.querySelectorAll('.revision-theme').forEach(theme => {
+      let cardMatches = 0;
+      theme.querySelectorAll('.flashcard').forEach(card => {
+        const title = card.querySelector('.fc-title')?.textContent?.toLowerCase() || '';
+        const match = !q || title.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) cardMatches++;
+      });
+      theme.style.display = (cardMatches === 0 && q) ? 'none' : '';
+      if (cardMatches > 0 || !q) visibleCount++;
+      // Si recherche active : ouvrir automatiquement les thèmes avec résultats, fermer les autres
+      if (q) theme.classList.toggle('open', cardMatches > 0);
+    });
+    emptyEl.style.display = (q && visibleCount === 0) ? 'block' : 'none';
+  };
+  searchInp.addEventListener('input', applySearch);
+  searchClear.addEventListener('click', () => { searchInp.value = ''; applySearch(); searchInp.focus(); });
 
   // Bouton "S'entraîner" (question) / "Rédiger" (exercice glisser-déposer)
   container.querySelectorAll('.fc-practice-btn').forEach(btn => {
@@ -1139,10 +1205,19 @@ function renderParcours() {
             </div>
             <div class="mastery-squares">
               ${gens.map(g => {
-                const lvl = p.skills[g.name]?.level ?? 0;
+                const skill = p.skills[g.name] || { level: 0, dueDay: 1 };
+                const lvl = skill.level;
                 const colors = ['#cbd5e1','#fbbf24','#fbbf24','#f97316','#22c55e','#16a34a'];
                 const q = gens.find(x => x.name === g.name);
-                return `<div class="mastery-sq" title="${q ? q().title : g.name} — niveau ${lvl}" style="background:${colors[lvl]};"></div>`;
+                const title = q ? q().title : g.name;
+                // Prochaine révision : jour dû par rapport au jour actuel
+                const daysUntil = skill.dueDay - day;
+                let nextReview = '';
+                if (lvl === 5) nextReview = ' · maîtrisé';
+                else if (daysUntil <= 0) nextReview = ' · à revoir aujourd\'hui';
+                else if (daysUntil === 1) nextReview = ' · à revoir demain';
+                else nextReview = ` · prochaine révision dans ${daysUntil} j`;
+                return `<div class="mastery-sq" title="${title.replace(/"/g, '&quot;')} — niveau ${lvl}/5${nextReview}" style="background:${colors[lvl]};"></div>`;
               }).join('')}
             </div>
           </div>`;
@@ -1953,10 +2028,20 @@ function renderDuelResults({ gains, unlocked, winnerIdx }) {
     `;
   };
 
+  // Couleur du pion/avatar du vainqueur (fixe si mini-jeu, sinon avatar)
+  const useFixed = duelState.miniGame === 'connect4' || duelState.miniGame === 'race';
+  const fixedColors = [
+    { main: '#3b82f6', dark: '#1e40af' },
+    { main: '#f59e0b', dark: '#b45309' }
+  ];
+  const wColor = winner ? (useFixed ? fixedColors[winnerIdx] : { main: winner.color, dark: avatarColor(winner.name+'_') }) : null;
+  const pionSvg = wColor
+    ? `<span style="display:inline-block;width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 35% 35%,${wColor.main} 0%,${wColor.dark} 100%);box-shadow:0 4px 12px rgba(0,0,0,0.35),inset -3px -4px 6px rgba(0,0,0,0.15);vertical-align:middle;margin-right:14px;"></span>`
+    : '';
   box.innerHTML = `
     <div class="duel-podium">
       <div class="duel-podium-title">${winner ? 'Vainqueur' : 'Match nul'}</div>
-      <div class="duel-podium-winner">${winner ? winner.name : 'Égalité'}</div>
+      <div class="duel-podium-winner">${pionSvg}${winner ? winner.name : 'Égalité'}</div>
       <div class="duel-podium-score">${s1} <span style="opacity:0.7;">vs</span> ${s2}</div>
     </div>
 
