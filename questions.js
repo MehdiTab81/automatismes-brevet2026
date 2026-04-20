@@ -1019,7 +1019,7 @@ function t3_equation_x_carre() {
   }
   return {
     theme: 'algebre', title: 'Équation x² = a',
-    body: `Résoudre dans \\(\\mathbb{R}\\) : \\(x^2 = ${k.a}\\).`,
+    body: `Résoudre l'équation : \\(x^2 = ${k.a}\\).`,
     type: 'qcm', choices, correctIdx,
     solution: sol,
     help: {
