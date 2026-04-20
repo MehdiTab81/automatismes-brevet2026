@@ -639,6 +639,46 @@ $('#btn-start').addEventListener('click', () => {
   renderQuestion();
 });
 
+/* ---------- Démarrer un entraînement libre ---------- */
+const btnStartTrain = $('#btn-start-train');
+if (btnStartTrain) {
+  btnStartTrain.addEventListener('click', () => {
+    // Récupère thèmes cochés
+    const themes = $$('#themes-list input[name="theme"]:checked').map(i => i.value);
+    if (!themes.length) {
+      alert('Coche au moins un thème pour t\'entraîner.');
+      return;
+    }
+    const nbq = parseInt(document.querySelector('input[name="train-nbq"]:checked')?.value, 10) || 7;
+    const duree = parseInt(document.querySelector('input[name="train-duree"]:checked')?.value, 10) || 0;
+
+    // Construit une série avec le nombre demandé. buildSeries force 9 par défaut — on tronque/complète.
+    const series = buildSeries(themes);
+    // buildSeries renvoie 9 max ; si on veut 12, on complète en tirant à nouveau sans contrainte "unique"
+    let finalSeries = series.slice(0, Math.min(nbq, series.length));
+    if (nbq > finalSeries.length) {
+      // Compléter en piochant parmi les générateurs des thèmes choisis (doublons autorisés)
+      const allGens = themes.flatMap(t => QUESTION_BANK[t] || []);
+      while (finalSeries.length < nbq && allGens.length > 0) {
+        const g = allGens[Math.floor(Math.random() * allGens.length)];
+        finalSeries.push(g());
+      }
+    }
+
+    state.mode = 'train';  // aide + cours disponibles
+    state.duree = duree;
+    state.series = finalSeries;
+    state.answers = state.series.map(() => ({ selectedIdx: null, inputAnswer: '', helped: false }));
+    state.current = 0;
+    state.startedAt = Date.now();
+    state.remaining = duree;
+    state.parcours = null;
+    startTimer();
+    showScreen('screen-test');
+    renderQuestion();
+  });
+}
+
 /* ---------- Timer ---------- */
 function startTimer() {
   clearInterval(state.timer);

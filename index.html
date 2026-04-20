@@ -45,14 +45,55 @@
   <!-- ÉCRAN ACCUEIL -->
   <section id="screen-home" class="screen active">
     <div class="menu-tabs">
-      <button class="tab-btn active" data-target="tab-eval">📝 S'évaluer</button>
+      <button class="tab-btn active" data-target="tab-train">💪 S'entraîner</button>
+      <button class="tab-btn" data-target="tab-eval">📝 S'évaluer</button>
       <button class="tab-btn" data-target="tab-parcours">🎯 Mon programme</button>
       <button class="tab-btn" data-target="tab-duel">⚔ Duel</button>
       <button class="tab-btn" data-target="tab-revision">📚 Fiches & outils</button>
     </div>
 
+    <!-- Onglet : entraînement libre -->
+    <div id="tab-train" class="tab-panel active">
+      <h2>💪 S'entraîner</h2>
+      <p class="lead">Choisis tes thèmes, ton nombre de questions et entraîne-toi à ton rythme. <strong>Aide, cours et signalement disponibles</strong> pendant la séance.</p>
+
+      <div class="card" style="background: linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.06) 100%); border-left: 4px solid var(--ok);">
+        <p style="margin:0;font-size:0.95rem;">
+          ✅ <strong>Mode libre</strong> : aide + cours disponibles, tu peux t'arrêter quand tu veux.<br>
+          🎯 <strong>Tu choisis</strong> : les thèmes, le nombre de questions, la durée.<br>
+          📊 <strong>À la fin</strong> : corrigé détaillé (mais <em>pas de note sur 6</em> — c'est de l'entraînement).
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Thèmes (coche au moins un)</h3>
+        <div id="themes-list" class="themes-grid"></div>
+        <div class="themes-actions">
+          <button type="button" class="ghost small" id="btn-all-themes">Tout cocher</button>
+          <button type="button" class="ghost small" id="btn-no-themes">Tout décocher</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Nombre de questions</h3>
+        <label class="check"><input type="radio" name="train-nbq" value="5" /> 5 questions (court)</label>
+        <label class="check"><input type="radio" name="train-nbq" value="7" checked /> 7 questions</label>
+        <label class="check"><input type="radio" name="train-nbq" value="9" /> 9 questions (format Brevet)</label>
+        <label class="check"><input type="radio" name="train-nbq" value="12" /> 12 questions (long)</label>
+      </div>
+
+      <div class="card">
+        <h3>Durée</h3>
+        <label class="check"><input type="radio" name="train-duree" value="0" checked /> Libre (pas de timer)</label>
+        <label class="check"><input type="radio" name="train-duree" value="900" /> 15 min</label>
+        <label class="check"><input type="radio" name="train-duree" value="1200" /> 20 min</label>
+      </div>
+
+      <button id="btn-start-train" class="primary big-btn">▶ Commencer l'entraînement</button>
+    </div>
+
     <!-- Onglet : évaluation -->
-    <div id="tab-eval" class="tab-panel active">
+    <div id="tab-eval" class="tab-panel">
       <h2>📝 S'évaluer comme au Brevet</h2>
       <p class="lead">9 questions tirées de tous les thèmes · 20 min chrono · sans calculatrice · note sur 6 à la fin, comme le jour J.</p>
 
@@ -72,7 +113,7 @@
       </div>
 
       <button id="btn-start" class="primary big-btn">▶ Commencer l'évaluation</button>
-      <p class="note">Calculatrice <em>non autorisée</em>. Valeurs tirées au hasard, toujours calculables mentalement ou posées simplement. Pour t'entraîner librement (avec aide + choix des thèmes), utilise plutôt <strong>🎯 Mon programme</strong> ou les <strong>📚 Fiches &amp; outils</strong>.</p>
+      <p class="note">Calculatrice <em>non autorisée</em>. Valeurs tirées au hasard, toujours calculables mentalement ou posées simplement. Pour t'entraîner librement (avec aide + choix des thèmes), utilise plutôt <strong>💪 S'entraîner</strong>.</p>
     </div>
 
     <!-- Onglet : mon programme -->
