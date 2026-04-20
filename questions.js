@@ -3690,15 +3690,532 @@ function t10_boucle_pour() {
   };
 }
 
+/* ------------------------------------------------------------------
+   Algo — instruction conditionnelle (niveau 2 attendu)
+   ------------------------------------------------------------------ */
+function t10_condition_si() {
+  const cases = [
+    { x: 8,  seuil: 5, branche: 'supérieur', msg: 'Grand', else_msg: 'Petit', r: 'Grand' },
+    { x: 3,  seuil: 5, branche: 'supérieur', msg: 'Grand', else_msg: 'Petit', r: 'Petit' },
+    { x: 12, seuil: 10, branche: 'supérieur', msg: 'Gagné', else_msg: 'Perdu', r: 'Gagné' },
+    { x: 7,  seuil: 10, branche: 'supérieur', msg: 'Gagné', else_msg: 'Perdu', r: 'Perdu' },
+    { x: 2,  seuil: 0, branche: 'supérieur', msg: 'Positif', else_msg: 'Négatif ou nul', r: 'Positif' },
+    { x: -3, seuil: 0, branche: 'supérieur', msg: 'Positif', else_msg: 'Négatif ou nul', r: 'Négatif ou nul' }
+  ];
+  const k = pick(cases);
+  const prog = scratchProgram([
+    { type: 'event',    text: 'quand drapeau cliqué' },
+    { type: 'variable', text: `mettre {v:n} à {n:${k.x}}` },
+    { type: 'control',  text: `si {op:n > ${k.seuil}} alors`, inner: [
+      { type: 'looks', text: `dire {t:${k.msg}}` }
+    ]},
+    { type: 'control', text: 'sinon', inner: [
+      { type: 'looks', text: `dire {t:${k.else_msg}}` }
+    ]}
+  ]);
+  const distract = [k.msg, k.else_msg, 'rien', '0'].filter(d => d !== k.r);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.r, correct: true },
+    ...shuffle(distract).slice(0, 3).map(d => ({ html: d, correct: false }))
+  ]);
+  return {
+    theme: 'algo', title: 'Instruction conditionnelle',
+    body: `Que dit le lutin après exécution ?${prog}`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Ici \\(n = ${k.x}\\) ${k.x > k.seuil ? '>' : '\\leq'} ${k.seuil}, donc on entre dans la branche « ${k.x > k.seuil ? 'alors' : 'sinon'} » et le lutin dit <b>« ${k.r} »</b>.`,
+    help: {
+      cours: "Une <b>instruction conditionnelle</b> « si … alors … sinon » teste une condition et exécute l'une ou l'autre branche selon le résultat (vrai ou faux).",
+      savoirFaire: "1) Lire la valeur de la variable. 2) Vérifier si la condition est vraie. 3) Suivre la branche correspondante.",
+      erreurs: ["Exécuter les deux branches.", "Confondre \\(>\\) et \\(\\geq\\).", "Oublier le cas d'égalité."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Algo — variable qui compte (niveau 2 attendu)
+   ------------------------------------------------------------------ */
+function t10_variable_compteur() {
+  const cases = [
+    { total: 5, action: 'ajouter 2', rep: 5, start: 0, r: 10 },
+    { total: 4, action: 'ajouter 3', rep: 4, start: 0, r: 12 },
+    { total: 6, action: 'ajouter 1', rep: 6, start: 10, r: 16 },
+    { total: 3, action: 'ajouter 5', rep: 3, start: 0, r: 15 },
+    { total: 4, action: 'ajouter 2', rep: 4, start: 1, r: 9 }
+  ];
+  const k = pick(cases);
+  const step = parseInt(k.action.match(/\d+/)[0], 10);
+  const prog = scratchProgram([
+    { type: 'event',    text: 'quand drapeau cliqué' },
+    { type: 'variable', text: `mettre {v:compteur} à {n:${k.start}}` },
+    { type: 'control', text: `répéter {n:${k.rep}} fois`, inner: [
+      { type: 'variable', text: `ajouter {n:${step}} à {v:compteur}` }
+    ]}
+  ]);
+  return {
+    theme: 'algo', title: 'Variable qui compte',
+    body: `Après exécution, quelle est la valeur finale de la variable <b>compteur</b> ?${prog}`,
+    type: 'input', expected: String(k.r),
+    solution: `On part de \\(${k.start}\\) et on ajoute ${step} à chaque passage (${k.rep} fois) : \\(${k.start} + ${k.rep} \\times ${step} = ${k.r}\\).`,
+    help: {
+      cours: "Une <b>variable</b> associe un nom à une valeur que le programme peut modifier. Le bloc « ajouter … à » incrémente la valeur actuelle.",
+      savoirFaire: "Dérouler la boucle : valeur initiale + (nombre de répétitions) × (pas).",
+      erreurs: ["Multiplier directement sans additionner la valeur initiale.", "Compter un passage de trop.", "Confondre « mettre à » (remplace) et « ajouter à » (incrémente)."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Algo — gestion d'événement (niveau 2 attendu)
+   ------------------------------------------------------------------ */
+function t10_evenement_drapeau() {
+  const cases = [
+    {
+      q: "Quand ce script est-il exécuté ?",
+      evt: 'quand drapeau cliqué',
+      a: "quand l'utilisateur clique sur le drapeau vert",
+      opts: ["quand l'utilisateur clique sur le drapeau vert", "au démarrage de l'ordinateur", "quand on appuie sur la touche espace", "quand deux lutins se touchent"]
+    },
+    {
+      q: "Quand ce script est-il exécuté ?",
+      evt: 'quand touche espace pressée',
+      a: "quand l'utilisateur appuie sur la touche espace",
+      opts: ["quand l'utilisateur appuie sur la touche espace", "quand on clique sur le drapeau vert", "en permanence", "quand le lutin change de costume"]
+    },
+    {
+      q: "Quel bloc déclenche un script <b>au clic sur le drapeau vert</b> ?",
+      evt: null,
+      a: "quand drapeau cliqué",
+      opts: ["quand drapeau cliqué", "quand touche pressée", "avancer de 10", "répéter 10 fois"]
+    }
+  ];
+  const k = pick(cases);
+  const prog = k.evt ? scratchProgram([
+    { type: 'event', text: k.evt },
+    { type: 'motion', text: 'avancer de {n:10}' }
+  ]) : '';
+  const { choices, correctIdx } = makeQCM([
+    { html: k.a, correct: true },
+    ...k.opts.filter(o => o !== k.a).map(o => ({ html: o, correct: false }))
+  ]);
+  return {
+    theme: 'algo', title: 'Événement Scratch',
+    body: `${k.q}${prog}`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Le bloc <b>${k.evt || 'quand drapeau cliqué'}</b> déclenche un script quand l'événement se produit : <b>${k.a}</b>.`,
+    help: {
+      cours: "Un <b>événement</b> (drapeau cliqué, touche pressée, lutin touché...) permet de déclencher un script. C'est le « chapeau » qui se place tout en haut.",
+      savoirFaire: "Repérer le bloc « quand … » qui coiffe la pile d'instructions.",
+      erreurs: ["Penser qu'un script démarre tout seul.", "Confondre les différents blocs d'événement.", "Oublier qu'il peut y avoir plusieurs scripts en parallèle."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Algo — bloc personnalisé (niveau 3 attendu)
+   ------------------------------------------------------------------ */
+function t10_bloc_perso() {
+  const cases = [
+    {
+      q: "Que dessine ce programme avec <b>Mon bloc</b> défini ci-dessous ?",
+      a: "3 carrés côte à côte",
+      opts: ["3 carrés côte à côte", "un triangle équilatéral", "un cercle", "3 triangles"],
+      // Main program : repeat 3 × (Mon bloc, move 60)
+      // Mon bloc : carré de côté 50
+      main: [
+        { type: 'event', text: 'quand drapeau cliqué' },
+        { type: 'control', text: 'répéter {n:3} fois', inner: [
+          { type: 'define', text: 'Mon bloc' },
+          { type: 'motion', text: 'avancer de {n:60}' }
+        ]}
+      ],
+      def: [
+        { type: 'define', text: 'définir Mon bloc' },
+        { type: 'control', text: 'répéter {n:4} fois', inner: [
+          { type: 'motion', text: 'avancer de {n:50}' },
+          { type: 'motion', text: 'tourner {n:90} degrés' }
+        ]}
+      ]
+    },
+    {
+      q: "Combien de fois le lutin avance-t-il au total ?",
+      a: "15",
+      opts: ["15", "3", "5", "8"],
+      // Main : repeat 3 × (Mon bloc) ; Mon bloc : repeat 5 × avancer
+      main: [
+        { type: 'event', text: 'quand drapeau cliqué' },
+        { type: 'control', text: 'répéter {n:3} fois', inner: [
+          { type: 'define', text: 'Mon bloc' }
+        ]}
+      ],
+      def: [
+        { type: 'define', text: 'définir Mon bloc' },
+        { type: 'control', text: 'répéter {n:5} fois', inner: [
+          { type: 'motion', text: 'avancer de {n:10}' }
+        ]}
+      ]
+    }
+  ];
+  const k = pick(cases);
+  const mainProg = scratchProgram(k.main);
+  const defProg = scratchProgram(k.def);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.a, correct: true },
+    ...k.opts.filter(o => o !== k.a).map(o => ({ html: o, correct: false }))
+  ]);
+  return {
+    theme: 'algo', title: 'Bloc personnalisé',
+    body: `${k.q}<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;"><div><div style="font-size:0.85rem;font-weight:600;text-align:center;margin-bottom:4px;">Programme principal</div>${mainProg}</div><div><div style="font-size:0.85rem;font-weight:600;text-align:center;margin-bottom:4px;">Définition du bloc</div>${defProg}</div></div>`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Chaque appel de <b>Mon bloc</b> exécute sa définition. La réponse est <b>${k.a}</b>.`,
+    help: {
+      cours: "Un <b>bloc personnalisé</b> (« Mes blocs ») permet de <b>regrouper</b> une suite d'instructions sous un seul nom, pour s'en servir plusieurs fois. C'est la <b>décomposition en sous-problèmes</b>.",
+      savoirFaire: "1) Lire la définition du bloc pour savoir ce qu'il fait. 2) Le remplacer mentalement dans le programme principal à chaque appel.",
+      erreurs: ["Oublier que le bloc est appelé plusieurs fois.", "Mal compter les répétitions imbriquées.", "Ignorer la définition."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Arithmétique — décomposition en produit de facteurs premiers
+   ------------------------------------------------------------------ */
+function t1_decomposition_premiers() {
+  const cases = [
+    { n: 12,  dec: '2^2 \\times 3' },
+    { n: 18,  dec: '2 \\times 3^2' },
+    { n: 24,  dec: '2^3 \\times 3' },
+    { n: 36,  dec: '2^2 \\times 3^2' },
+    { n: 45,  dec: '3^2 \\times 5' },
+    { n: 50,  dec: '2 \\times 5^2' },
+    { n: 60,  dec: '2^2 \\times 3 \\times 5' },
+    { n: 72,  dec: '2^3 \\times 3^2' },
+    { n: 84,  dec: '2^2 \\times 3 \\times 7' },
+    { n: 100, dec: '2^2 \\times 5^2' }
+  ];
+  const k = pick(cases);
+  const distract = cases.filter(c => c.dec !== k.dec).slice(0, 3).map(c => c.dec);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${k.dec}\\)`, correct: true },
+    ...distract.map(d => ({ html: `\\(${d}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'arithmetique', title: 'Décomposition en facteurs premiers',
+    body: `Décompose \\(${k.n}\\) en produit de facteurs premiers.`,
+    type: 'qcm', choices, correctIdx,
+    solution: `On divise successivement par les premiers (2, 3, 5, 7...) : \\(${k.n} = ${k.dec}\\).`,
+    help: {
+      cours: "<b>Décomposer en facteurs premiers</b> : écrire un entier comme un produit de nombres premiers, avec éventuellement des puissances. Exemple : \\(60 = 2^2 \\times 3 \\times 5\\).",
+      savoirFaire: "Diviser par 2 tant que c'est possible, puis par 3, puis 5, puis 7... jusqu'à obtenir 1.",
+      erreurs: ["Oublier une puissance (ex : écrire \\(2\\times 3\\) au lieu de \\(2^2\\times 3\\)).", "Utiliser un nombre non premier (6 = 2×3 n'est pas un facteur premier).", "Mélanger l'ordre."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Arithmétique — problème PGCD (partage en lots identiques)
+   ------------------------------------------------------------------ */
+function t1_probleme_pgcd() {
+  const cases = [
+    {
+      q: "Une fleuriste dispose de 48 roses rouges et 60 roses blanches. Elle veut composer le plus grand nombre possible de bouquets <b>identiques</b>, en utilisant toutes les fleurs. Combien de bouquets peut-elle faire ?",
+      a: 48, b: 60, pgcd: 12,
+      sol: "Il faut que le nombre de bouquets divise à la fois 48 et 60. On cherche donc le <b>PGCD</b> de 48 et 60.<br>\\(\\text{PGCD}(48, 60) = 12\\). Elle peut faire <b>12 bouquets</b>."
+    },
+    {
+      q: "Un bibliothécaire a 84 romans et 126 BD. Il veut former le plus grand nombre possible de lots <b>identiques</b> utilisant <b>tous</b> les livres. Combien de lots au maximum ?",
+      a: 84, b: 126, pgcd: 42,
+      sol: "On cherche \\(\\text{PGCD}(84, 126) = 42\\). Il peut faire <b>42 lots</b>."
+    },
+    {
+      q: "Deux cordes mesurent 72 cm et 108 cm. On veut les couper en morceaux de même longueur, la plus grande possible, sans perte. Quelle sera la longueur d'un morceau (en cm) ?",
+      a: 72, b: 108, pgcd: 36,
+      sol: "\\(\\text{PGCD}(72, 108) = 36\\). Chaque morceau mesurera <b>36 cm</b>."
+    },
+    {
+      q: "Un professeur a 45 stylos et 75 crayons. Il veut constituer le plus grand nombre possible de trousses <b>identiques</b> en utilisant tout. Combien de trousses peut-il faire ?",
+      a: 45, b: 75, pgcd: 15,
+      sol: "\\(\\text{PGCD}(45, 75) = 15\\). Il peut faire <b>15 trousses</b>."
+    }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'arithmetique', title: 'Problème avec PGCD',
+    body: k.q,
+    type: 'input', expected: String(k.pgcd),
+    solution: k.sol,
+    help: {
+      cours: "Pour <b>partager en lots identiques</b> utilisant la totalité de deux quantités, on cherche le plus grand nombre qui divise les deux : c'est le <b>PGCD</b>.",
+      savoirFaire: "Repérer le mot « identiques » + « le plus grand possible » + « en utilisant tout » → c'est un problème de PGCD.",
+      erreurs: ["Confondre PGCD et PPCM.", "Additionner les deux quantités.", "Diviser naïvement l'une par l'autre."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Pourcentages — évolutions successives
+   ------------------------------------------------------------------ */
+function t2_evolutions_successives() {
+  const cases = [
+    { p0: 100, e1: 20, s1: '+', e2: 10, s2: '-', coef: '1,08', pf: 108 },  // 1,2 × 0,9 = 1,08
+    { p0: 200, e1: 50, s1: '+', e2: 20, s2: '-', coef: '1,20', pf: 240 },  // 1,5 × 0,8 = 1,20
+    { p0: 80,  e1: 25, s1: '+', e2: 20, s2: '-', coef: '1,00', pf: 80 },   // 1,25 × 0,8 = 1,00
+    { p0: 150, e1: 10, s1: '+', e2: 10, s2: '+', coef: '1,21', pf: 181.5 } // 1,1² = 1,21
+  ];
+  const k = pick(cases);
+  const c1 = k.s1 === '+' ? (1 + k.e1/100) : (1 - k.e1/100);
+  const c2 = k.s2 === '+' ? (1 + k.e2/100) : (1 - k.e2/100);
+  const c1str = c1.toString().replace('.', ',');
+  const c2str = c2.toString().replace('.', ',');
+  return {
+    theme: 'pourcent', title: 'Évolutions successives',
+    body: `Un prix de ${k.p0}&nbsp;€ subit une première évolution de <b>${k.s1}${k.e1}&nbsp;%</b>, puis une seconde de <b>${k.s2}${k.e2}&nbsp;%</b>. Quel est le coefficient multiplicateur global (sous forme décimale) ?`,
+    type: 'input', expected: [k.coef, k.coef.replace(',', '.')],
+    solution: `Coefficient global = \\(${c1str} \\times ${c2str} = ${k.coef}\\). Le prix devient \\(${k.p0} \\times ${k.coef} = ${k.pf}\\)&nbsp;€.`,
+    help: {
+      cours: "Pour <b>deux évolutions successives</b>, on <b>multiplie</b> les coefficients (on ne les additionne pas !).",
+      savoirFaire: "Écrire chaque coefficient séparément, puis faire le produit.",
+      erreurs: ["Additionner les pourcentages (+20% puis −10% ≠ +10%).", "Confondre avec la moyenne.", "Oublier que chaque évolution s'applique au prix précédent, pas au prix de départ."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Pourcentages — échelle de carte
+   ------------------------------------------------------------------ */
+function t2_echelle_carte() {
+  const cases = [
+    { distCarteCm: 4, echelle: 100000, distReelleKm: 4 },   // 4 cm × 100000 = 400000 cm = 4 km
+    { distCarteCm: 7, echelle: 100000, distReelleKm: 7 },
+    { distCarteCm: 5, echelle: 200000, distReelleKm: 10 },
+    { distCarteCm: 3, echelle: 500000, distReelleKm: 15 },
+    { distCarteCm: 8, echelle: 25000,  distReelleKm: 2 },
+    { distCarteCm: 6, echelle: 50000,  distReelleKm: 3 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'pourcent', title: 'Échelle d\'une carte',
+    body: `Sur une carte à l'échelle 1/${k.echelle.toLocaleString('fr-FR')}, deux villes sont distantes de ${k.distCarteCm}&nbsp;cm. Quelle est la distance réelle entre elles (en km) ?`,
+    type: 'input', expected: String(k.distReelleKm), suffix: 'km',
+    solution: `À l'échelle 1/${k.echelle.toLocaleString('fr-FR')}, 1 cm sur la carte représente ${k.echelle.toLocaleString('fr-FR')} cm en réalité.<br>Distance réelle : \\(${k.distCarteCm} \\times ${k.echelle.toLocaleString('fr-FR')} = ${(k.distCarteCm*k.echelle).toLocaleString('fr-FR')}\\) cm = <b>${k.distReelleKm} km</b> (car \\(100\\,000\\) cm = 1 km).`,
+    help: {
+      cours: "Une <b>échelle 1/n</b> signifie que 1 cm sur la carte représente \\(n\\) cm en réalité. L'échelle est une situation de <b>proportionnalité</b>.",
+      savoirFaire: "Multiplier la distance sur la carte par \\(n\\), puis convertir en km (1 km = 100 000 cm).",
+      erreurs: ["Oublier de convertir cm en km.", "Diviser au lieu de multiplier.", "Confondre 1/n avec n."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Fonctions — antécédent algébrique via équation
+   ------------------------------------------------------------------ */
+function t4_antecedent_algebrique() {
+  const cases = [
+    { f: '-3x - 4', cible: 10, x: -14/3, sol: 'x = -\\dfrac{14}{3}' }, // Trop complexe ; simplifions
+  ].slice(0, 0); // vide, on préfère des valeurs entières
+  const easy = [
+    { f: '2x + 5',  cible: 11, x: 3 },
+    { f: '3x - 1',  cible: 8,  x: 3 },
+    { f: '-x + 7',  cible: 2,  x: 5 },
+    { f: '4x + 2',  cible: 10, x: 2 },
+    { f: '5x - 3',  cible: 12, x: 3 },
+    { f: '-2x + 8', cible: 2,  x: 3 },
+    { f: '6x + 1',  cible: 13, x: 2 },
+    { f: '3x + 4',  cible: 19, x: 5 }
+  ];
+  const k = pick(easy);
+  const distract = [k.x + 1, k.x - 1, k.cible].filter(v => v !== k.x);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(x = ${k.x}\\)`, correct: true },
+    ...shuffle(distract).slice(0, 3).map(v => ({ html: `\\(x = ${v}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'fonctions', title: 'Antécédent algébrique',
+    body: `Soit \\(f\\) la fonction définie par \\(f(x) = ${k.f}\\). Quel est l'antécédent de \\(${k.cible}\\) par \\(f\\) ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: `On résout l'équation \\(f(x) = ${k.cible}\\), c'est-à-dire \\(${k.f} = ${k.cible}\\), ce qui donne \\(x = ${k.x}\\).`,
+    help: {
+      cours: "Un <b>antécédent</b> d'un nombre \\(y\\) par une fonction \\(f\\) est un nombre \\(x\\) tel que \\(f(x) = y\\). Pour le trouver par le calcul, on résout l'équation \\(f(x) = y\\).",
+      savoirFaire: "Poser l'équation \\(f(x) = y\\), puis la résoudre comme une équation du premier degré.",
+      erreurs: ["Confondre image et antécédent (image : on part de \\(x\\), on cherche \\(f(x)\\) ; antécédent : on part de \\(f(x)\\), on cherche \\(x\\)).", "Substituer \\(y\\) à la place de \\(x\\).", "Se tromper de signe."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Fonctions — notation fonctionnelle
+   ------------------------------------------------------------------ */
+function t4_notation_fonction() {
+  const cases = [
+    {
+      q: "L'écriture \\(f : x \\mapsto 3x + 2\\) signifie :",
+      a: "\\(f\\) est la fonction qui, à \\(x\\), associe \\(3x + 2\\)",
+      opts: [
+        "\\(f\\) est la fonction qui, à \\(x\\), associe \\(3x + 2\\)",
+        "\\(f(x)\\) vaut \\(x\\) multiplié par 3 puis 2",
+        "\\(x\\) est la variable et \\(3x + 2\\) est la fonction",
+        "\\(f\\) vaut \\(3x + 2\\)"
+      ]
+    },
+    {
+      q: "Si \\(g(5) = 15\\), que peut-on dire ?",
+      a: "15 est l'image de 5 par \\(g\\), et 5 est un antécédent de 15",
+      opts: [
+        "15 est l'image de 5 par \\(g\\), et 5 est un antécédent de 15",
+        "5 est l'image de 15 par \\(g\\), et 15 est un antécédent de 5",
+        "\\(g\\) vaut 15",
+        "\\(g(15) = 5\\)"
+      ]
+    },
+    {
+      q: "Soit \\(f(x) = 3x^2 - 7\\). Quelle est l'image de 2 par \\(f\\) ?",
+      a: "5",
+      opts: ["5", "-1", "-13", "12"]
+    },
+    {
+      q: "Les écritures \\(f : x \\mapsto 3x^2 - 7\\) et \\(f(x) = 3x^2 - 7\\) :",
+      a: "désignent la même fonction",
+      opts: [
+        "désignent la même fonction",
+        "désignent deux fonctions différentes",
+        "ne sont pas correctes",
+        "sont équivalentes seulement si \\(x > 0\\)"
+      ]
+    }
+  ];
+  const k = pick(cases);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.a, correct: true },
+    ...k.opts.filter(o => o !== k.a).map(o => ({ html: o, correct: false }))
+  ]);
+  return {
+    theme: 'fonctions', title: 'Notation fonctionnelle',
+    body: k.q,
+    type: 'qcm', choices, correctIdx,
+    solution: `La bonne réponse est : <b>${k.a}</b>.`,
+    help: {
+      cours: "Deux écritures équivalentes :<br>• \\(f : x \\mapsto 3x - 7\\) (« \\(f\\) est la fonction qui à \\(x\\) associe \\(3x-7\\) »)<br>• \\(f(x) = 3x - 7\\) (« l'image de \\(x\\) par \\(f\\) vaut \\(3x-7\\) »).<br>Si \\(f(a) = b\\) : \\(b\\) est l'<b>image</b> de \\(a\\) ; \\(a\\) est un <b>antécédent</b> de \\(b\\).",
+      savoirFaire: "Lire la notation : la flèche \\(\\mapsto\\) sépare la variable et l'expression.",
+      erreurs: ["Confondre image et antécédent.", "Penser que \\(f\\) est un nombre.", "Mal lire la flèche \\(\\mapsto\\)."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Fonctions — signe de a et b d'après allure
+   ------------------------------------------------------------------ */
+function t4_signe_a_b_allure() {
+  const cases = [
+    { aSigne: '+', bSigne: '+', a: 2,  b: 1,  axMax: 3, axMin: -1 },
+    { aSigne: '+', bSigne: '-', a: 2,  b: -3, axMax: 3, axMin: -1 },
+    { aSigne: '-', bSigne: '+', a: -1, b: 2,  axMax: 3, axMin: -1 },
+    { aSigne: '-', bSigne: '-', a: -2, b: -1, axMax: 3, axMin: -1 }
+  ];
+  const k = pick(cases);
+  // SVG d'une droite affine f(x) = ax + b
+  const W = 240, H = 200, origX = 120, origY = 100, scale = 18;
+  const x1 = -4, y1 = k.a * x1 + k.b;
+  const x2 = 4,  y2 = k.a * x2 + k.b;
+  const pX = x => origX + x * scale;
+  const pY = y => origY - y * scale;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:240px;display:block;margin:10px auto;background:#fcfcfc;border:1px solid #ddd;border-radius:8px;">
+    <line x1="10" y1="${origY}" x2="${W-10}" y2="${origY}" stroke="#888" stroke-width="1"/>
+    <line x1="${origX}" y1="10" x2="${origX}" y2="${H-10}" stroke="#888" stroke-width="1"/>
+    <text x="${W-8}" y="${origY-4}" font-size="10" fill="#555">x</text>
+    <text x="${origX+4}" y="12" font-size="10" fill="#555">y</text>
+    <line x1="${pX(x1)}" y1="${pY(y1)}" x2="${pX(x2)}" y2="${pY(y2)}" stroke="#ec4899" stroke-width="2"/>
+    <circle cx="${origX}" cy="${pY(k.b)}" r="3" fill="#ec4899"/>
+    <text x="${origX+6}" y="${pY(k.b)-4}" font-size="10" fill="#ec4899" font-weight="700">(0 ; ${k.b})</text>
+  </svg>`;
+  const options = [
+    { label: '\\(a > 0\\) et \\(b > 0\\)', key: '++' },
+    { label: '\\(a > 0\\) et \\(b < 0\\)', key: '+-' },
+    { label: '\\(a < 0\\) et \\(b > 0\\)', key: '-+' },
+    { label: '\\(a < 0\\) et \\(b < 0\\)', key: '--' }
+  ];
+  const goodKey = k.aSigne + k.bSigne;
+  const { choices, correctIdx } = makeQCM(
+    options.map(o => ({ html: o.label, correct: o.key === goodKey }))
+  );
+  return {
+    theme: 'fonctions', title: 'Signe de a et b (allure)',
+    body: `Voici la représentation graphique d'une fonction affine \\(f(x) = ax + b\\). Que peut-on dire des signes de \\(a\\) et de \\(b\\) ?${svg}`,
+    type: 'qcm', choices, correctIdx,
+    solution: `La droite ${k.aSigne === '+' ? '<b>monte</b>' : '<b>descend</b>'} → \\(a ${k.aSigne === '+' ? '> 0' : '< 0'}\\).<br>Elle coupe l'axe des ordonnées ${k.bSigne === '+' ? '<b>au-dessus</b>' : '<b>en-dessous</b>'} de l'origine → \\(b ${k.bSigne === '+' ? '> 0' : '< 0'}\\).`,
+    help: {
+      cours: "Pour une fonction affine \\(f(x) = ax + b\\) :<br>• <b>\\(a\\) (coefficient directeur)</b> : \\(a > 0\\) → droite qui monte ; \\(a < 0\\) → descend.<br>• <b>\\(b\\) (ordonnée à l'origine)</b> : signe de l'ordonnée du point d'intersection avec l'axe vertical.",
+      savoirFaire: "Observer le sens de variation + lire l'ordonnée en \\(x=0\\).",
+      erreurs: ["Confondre \\(a\\) et \\(b\\).", "Inverser les signes.", "Oublier que \\(b\\) est la valeur en 0, pas au point de croisement avec l'axe des abscisses."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Angles — triangle isocèle (angle à la base, au sommet)
+   ------------------------------------------------------------------ */
+function tA_triangle_isocele() {
+  const cases = [
+    { cas: 'base', donne: 40, reponse: 100, desc: "Dans un triangle isocèle, les deux angles à la base mesurent chacun 40°. Combien mesure l'angle au sommet ?" },
+    { cas: 'base', donne: 50, reponse: 80 },
+    { cas: 'base', donne: 30, reponse: 120 },
+    { cas: 'base', donne: 65, reponse: 50 },
+    { cas: 'sommet', donne: 80, reponse: 50, desc: "Dans un triangle isocèle, l'angle au sommet mesure 80°. Combien mesure chacun des deux angles à la base ?" },
+    { cas: 'sommet', donne: 40, reponse: 70 },
+    { cas: 'sommet', donne: 100, reponse: 40 },
+    { cas: 'sommet', donne: 60, reponse: 60 }
+  ];
+  const k = pick(cases);
+  const body = k.cas === 'base'
+    ? `Dans un triangle isocèle, les deux angles à la base mesurent chacun ${k.donne}°. Combien mesure l'angle au sommet (en °) ?`
+    : `Dans un triangle isocèle, l'angle au sommet mesure ${k.donne}°. Combien mesure chacun des deux angles à la base (en °) ?`;
+  const sol = k.cas === 'base'
+    ? `Somme des angles d'un triangle = 180°. Angle au sommet = \\(180 - 2 \\times ${k.donne} = ${k.reponse}\\)°.`
+    : `Les deux angles à la base sont égaux. Leur somme = \\(180 - ${k.donne} = ${180 - k.donne}\\)°. Chacun mesure \\(${180 - k.donne} \\div 2 = ${k.reponse}\\)°.`;
+  return {
+    theme: 'angles', title: 'Triangle isocèle',
+    body, type: 'input', expected: String(k.reponse), suffix: '°',
+    solution: sol,
+    help: {
+      cours: "Dans un <b>triangle isocèle</b>, les deux angles à la base sont égaux. La somme des trois angles vaut 180°.",
+      savoirFaire: "Si l'angle au sommet est \\(S\\), chaque angle à la base vaut \\((180 - S) / 2\\). Si un angle à la base est \\(B\\), le sommet vaut \\(180 - 2B\\).",
+      erreurs: ["Oublier de diviser par 2 pour retrouver un seul angle à la base.", "Confondre angle au sommet et angle à la base.", "Se tromper dans la somme à 180°."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Angles — somme des angles d'un quadrilatère
+   ------------------------------------------------------------------ */
+function tA_somme_quadrilatere() {
+  const cases = [
+    { angles: [90, 90, 110], r: 70 },
+    { angles: [80, 100, 75], r: 105 },
+    { angles: [60, 120, 80], r: 100 },
+    { angles: [90, 90, 90], r: 90 },  // quatre angles droits → rectangle
+    { angles: [70, 110, 70], r: 110 },
+    { angles: [85, 95, 105], r: 75 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'angles', title: 'Somme des angles d\'un quadrilatère',
+    body: `Un quadrilatère a trois de ses angles qui mesurent ${k.angles[0]}°, ${k.angles[1]}° et ${k.angles[2]}°. Combien mesure le quatrième (en °) ?`,
+    type: 'input', expected: String(k.r), suffix: '°',
+    solution: `La somme des angles d'un quadrilatère vaut \\(360°\\). Le 4<sup>e</sup> angle vaut \\(360 - ${k.angles[0]} - ${k.angles[1]} - ${k.angles[2]} = ${k.r}\\)°.`,
+    help: {
+      cours: "Dans tout <b>quadrilatère</b>, la somme des quatre angles vaut <b>360°</b> (un quadrilatère = 2 triangles, donc 2×180° = 360°).",
+      savoirFaire: "Soustraire la somme des trois angles connus à 360°.",
+      erreurs: ["Utiliser 180° (somme pour un triangle).", "Oublier un angle dans le calcul.", "Se tromper de calcul."]
+    }
+  };
+}
+
 /* ==========================================================================
    EXPORT : mappage thème → générateurs
    ========================================================================== */
 const QUESTION_BANK = {
   calcul:       [ t1_priorites, t1_fraction_entier, t1_somme_fractions, t1_produit_fractions, t1_puissance, t1_puissance_10, t1_ecriture_sci, t1_op_ecriture_sci, t1_racine_carre_parfait, t1_racine_encadrement, t1_racine_arrondi ],
-  arithmetique: [ t1_pgcd, t1_ppcm, t1_frac_irred, t1_divisibilite, t1_nombre_premier ],
-  pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion, t2_coef_multiplicateur, t2_coef_mult_application ],
+  arithmetique: [ t1_pgcd, t1_ppcm, t1_frac_irred, t1_divisibilite, t1_nombre_premier, t1_decomposition_premiers, t1_probleme_pgcd ],
+  pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion, t2_coef_multiplicateur, t2_coef_mult_application, t2_evolutions_successives, t2_echelle_carte ],
   algebre:    [ t3_equation, t3_developpe, t3_factoriser, t3_image, t3_equivalence_equation, t3_identite_remarquable, t3_equation_produit, t3_equation_x_carre, t3_oppose_expression ],
-  fonctions:  [ t4_image_lineaire, t4_coefficient_lin, t4_fonction_affine, t4_lecture_graphique, t4_intersection_droites, t4_ab_graphique, t4_modelisation ],
+  fonctions:  [ t4_image_lineaire, t4_coefficient_lin, t4_fonction_affine, t4_lecture_graphique, t4_intersection_droites, t4_ab_graphique, t4_modelisation, t4_antecedent_algebrique, t4_notation_fonction, t4_signe_a_b_allure ],
   geometrie:  [
     t5_pythagore_hypotenuse, t5_pythagore_cote, t5_pythagore_reciproque,
     t5_thales, t5_thales_papillon, t5_thales_reciproque,
@@ -3706,13 +4223,13 @@ const QUESTION_BANK = {
     t5_perimetre_losange, t5_angle_droit,
     t6_angles_complementaires, t6_cos_formule, t6_choisir_formule, t6_identifier_cote, t6_ecrire_rapport, t6_choix_formule_cote
   ],
-  angles:     [ tA_somme_triangle, tA_supplementaires, tA_opposes_sommet, tA_alternes_correspondants ],
+  angles:     [ tA_somme_triangle, tA_supplementaires, tA_opposes_sommet, tA_alternes_correspondants, tA_triangle_isocele, tA_somme_quadrilatere ],
   espace:     [ t9_volume_pave, t9_volume_cube, t11_volume_cylindre, t11_volume_cone, t11_volume_sphere, t11_volume_pyramide, t11_aire_sphere, t11_agrandissement_volume, t11_section, t11_volume_assemblage, t11_lat_long ],
   transformations: [ t7_identifier_transfo, t7_frise_transformation, t7_frise_image, t7_fraction_tour, t7_axes_symetrie, t7_conservation, t7_homothetie_aire, t7_sym_centrale_identite ],
   stats:      [ t8_mediane, t8_moyenne, t8_etendue, t8_moy_effectifs, t8_frequence, t8_diagramme_batons, t8_camembert, t8_camembert_angle, t8_histogramme ],
   probas:     [ t8_proba_simple, t8_proba_contraire, t8_proba_tableau, t8_proba_de, t8_proba_deux_epreuves ],
   mesures:    [ t9_aire_rectangle, t9_aire_disque, t9_aire_carre, t9_conv_longueur, t9_conv_aire, t9_conv_volume, t9_arrondi, t11_grandeur_composee ],
-  algo:       [ t10_scratch_carre, t10_polygone_regulier, t10_scratch_calcul, t10_boucle_pour ]
+  algo:       [ t10_scratch_carre, t10_polygone_regulier, t10_scratch_calcul, t10_boucle_pour, t10_condition_si, t10_variable_compteur, t10_evenement_drapeau, t10_bloc_perso ]
 };
 
 const THEME_META = {
