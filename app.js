@@ -659,6 +659,14 @@ function showProfileMenu() {
         <button class="ghost" id="btn-edit-profile" style="width:100%;">✏️ Modifier prénom / classe</button>
       </div>
 
+      <div class="profile-section">
+        <h4>📱 Astuces</h4>
+        <div class="pwa-info">
+          <div class="pwa-info-row"><strong>✓ Fonctionne sans Wi-Fi</strong><br><span class="note">Une fois ouvert une première fois, le site marche même sans connexion. Parfait pour réviser en voiture, dans le métro, ou quand la box est en panne.</span></div>
+          ${!isStandaloneMode() ? `<div class="pwa-info-row" style="margin-top:8px;"><button class="ghost small" id="btn-show-install-guide" style="width:100%;">📱 Comment installer l'app sur mon téléphone ?</button></div>` : `<div class="pwa-info-row" style="margin-top:8px;color:var(--ok);"><strong>🎉 App installée</strong></div>`}
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button class="ghost" id="btn-profile-close">Fermer</button>
       </div>
@@ -690,6 +698,40 @@ function showProfileMenu() {
     close();
     showLogin(st);
   });
+
+  // Guide d'installation accessible depuis la modale profil
+  $('#btn-show-install-guide')?.addEventListener('click', () => {
+    close();
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+    } else if (isIOS()) {
+      showIOSInstallGuide();
+    } else {
+      showGenericInstallGuide();
+    }
+  });
+}
+
+/* Guide générique (Android/desktop quand prompt pas dispo) */
+function showGenericInstallGuide() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>📱 Installer l'app</h3>
+      <p style="font-size:0.95rem;line-height:1.6;">Selon ton navigateur :</p>
+      <ul style="padding-left:22px;line-height:1.8;">
+        <li><strong>Chrome / Edge (Android, PC)</strong> : menu <strong>⋮</strong> → <strong>« Installer l'application »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong></li>
+        <li><strong>Safari (iPhone, iPad)</strong> : bouton Partager <strong>&#x2B06;</strong> → <strong>« Sur l'écran d'accueil »</strong></li>
+        <li><strong>Firefox</strong> : menu ⋮ → <strong>« Installer »</strong></li>
+      </ul>
+      <p class="note" style="font-size:0.85rem;">Une fois installée, l'app fonctionne <strong>sans Wi-Fi</strong> et s'ouvre comme une vraie application.</p>
+      <div class="modal-actions">
+        <button class="primary" id="btn-install-ok">OK</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  $('#btn-install-ok').addEventListener('click', () => modal.remove());
 }
 
 /* Rappel automatique : si l'élève a fait 5+ séances sans export, on lui suggère
@@ -3108,6 +3150,114 @@ if ('serviceWorker' in navigator) {
       console.warn('[PWA] SW registration failed:', err);
     });
   });
+}
+
+/* ==========================================================================
+   PWA — Détection de l'installation et affichage d'une astuce à l'élève
+   ========================================================================== */
+const PWA_TIP_DISMISSED_KEY = 'auto3br.pwa.tip.dismissed';
+const PWA_HELP_SHOWN_KEY = 'auto3br.pwa.help.shown';
+let deferredInstallPrompt = null;
+
+/* Capte l'événement d'installation pour pouvoir le déclencher plus tard (Android/Chrome).
+   iOS ne supporte pas cet event — il faut proposer un guide manuel. */
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showPWAInstallTip();
+});
+
+/* Si l'élève a installé, on masque l'astuce et on le félicite la 1re fois */
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const tip = document.querySelector('.pwa-tip');
+  if (tip) tip.remove();
+  if (!localStorage.getItem('auto3br.pwa.installed')) {
+    localStorage.setItem('auto3br.pwa.installed', '1');
+    // petit toast de remerciement
+    const toast = document.createElement('div');
+    toast.className = 'pwa-tip pwa-tip-success';
+    toast.innerHTML = '🎉 <strong>C\'est installé !</strong> Tu retrouveras l\'app sur ton écran d\'accueil.';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+  }
+});
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+function isIOS() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+function showPWAInstallTip() {
+  if (localStorage.getItem(PWA_TIP_DISMISSED_KEY)) return;
+  if (isStandaloneMode()) return;
+  if (document.querySelector('.pwa-tip')) return;
+
+  const tip = document.createElement('div');
+  tip.className = 'pwa-tip';
+  tip.innerHTML = `
+    <span class="pwa-tip-icon">📱</span>
+    <div class="pwa-tip-body">
+      <strong>Installe l'app sur ton téléphone</strong>
+      <span class="pwa-tip-sub">Tu pourras travailler <strong>même sans Wi-Fi</strong> et la retrouver sur ton écran d'accueil.</span>
+    </div>
+    <button class="primary small" id="btn-pwa-install">Installer</button>
+    <button class="icon-btn pwa-tip-close" id="btn-pwa-dismiss" aria-label="Masquer">✕</button>`;
+  document.body.appendChild(tip);
+  $('#btn-pwa-dismiss').addEventListener('click', () => {
+    tip.remove();
+    localStorage.setItem(PWA_TIP_DISMISSED_KEY, '1');
+  });
+  $('#btn-pwa-install').addEventListener('click', async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        localStorage.setItem(PWA_TIP_DISMISSED_KEY, '1');
+      }
+      deferredInstallPrompt = null;
+      tip.remove();
+    } else if (isIOS()) {
+      showIOSInstallGuide();
+      tip.remove();
+    }
+  });
+}
+
+/* iOS : pas d'event d'install → on doit montrer un guide visuel */
+function showIOSInstallGuide() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-backdrop';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>📱 Installer sur iPhone / iPad</h3>
+      <p style="font-size:0.95rem;line-height:1.6;">Pour installer l'app sur ton iPhone :</p>
+      <ol style="padding-left:22px;line-height:1.8;">
+        <li>En bas de Safari, touche le bouton <strong style="display:inline-block;border:1px solid var(--border);padding:0 6px;border-radius:4px;">&#x2B06;</strong> <em>(Partager)</em></li>
+        <li>Fais défiler, puis touche <strong>« Sur l'écran d'accueil »</strong></li>
+        <li>Touche <strong>« Ajouter »</strong> en haut à droite</li>
+      </ol>
+      <p class="note" style="font-size:0.85rem;">L'app <strong>Auto 3ème</strong> s'affichera sur ton écran d'accueil et fonctionnera même sans Wi-Fi.</p>
+      <div class="modal-actions">
+        <button class="primary" id="btn-ios-ok">OK, compris</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  $('#btn-ios-ok').addEventListener('click', () => modal.remove());
+}
+
+/* Sur iOS, beforeinstallprompt n'existe pas. On déclenche quand même l'astuce
+   dès le 2e chargement, sauf si déjà installé / fermé par l'élève. */
+if (isIOS() && !isStandaloneMode() && !localStorage.getItem(PWA_TIP_DISMISSED_KEY)) {
+  const visits = parseInt(localStorage.getItem('auto3br.visits') || '0');
+  localStorage.setItem('auto3br.visits', String(visits + 1));
+  if (visits >= 1) {
+    // 2e visite ou plus
+    window.addEventListener('load', () => setTimeout(showPWAInstallTip, 1500));
+  }
 }
 // Bandeau d'invitation au 1er lancement (non bloquant)
 if (!getStudent() && !localStorage.getItem('auto3br.welcome-dismissed')) {

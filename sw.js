@@ -8,7 +8,7 @@
    Incrémente CACHE_VERSION quand on déploie une nouvelle version.
 */
 
-const CACHE_VERSION = 'v1-2026-04-20';
+const CACHE_VERSION = 'v2-2026-04-21';
 const SHELL_CACHE = `auto3br-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `auto3br-runtime-${CACHE_VERSION}`;
 
