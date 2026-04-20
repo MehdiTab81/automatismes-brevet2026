@@ -722,6 +722,143 @@ body[data-theme="dark"] .proba-table td.hit {
   color: #a7f3d0;
 }
 
+/* ==========================================================================
+   Accessibilité — profil PAP/PPS/dys/TDAH
+   ========================================================================== */
+
+/* Police Lexend : plus lisible pour élèves dys */
+body.a11y-font-lexend,
+body.a11y-font-lexend input,
+body.a11y-font-lexend textarea,
+body.a11y-font-lexend select,
+body.a11y-font-lexend button {
+  font-family: 'Lexend', 'Inter', system-ui, sans-serif !important;
+}
+
+/* Tailles de texte (échelonnées) */
+body.a11y-size-large { font-size: 17.25px; }  /* +15% */
+body.a11y-size-xlarge { font-size: 19.5px; }  /* +30% */
+
+/* Interligne aéré */
+body.a11y-spacing p,
+body.a11y-spacing .lead,
+body.a11y-spacing .note,
+body.a11y-spacing .question-body,
+body.a11y-spacing label,
+body.a11y-spacing .choice {
+  line-height: 1.9 !important;
+  letter-spacing: 0.02em;
+}
+
+/* Fond crème (apaisant pour lecture longue) */
+body.a11y-bg-cream:not([data-theme="dark"]) {
+  background: #FAF3E7 !important;
+}
+body.a11y-bg-cream:not([data-theme="dark"]) .card,
+body.a11y-bg-cream:not([data-theme="dark"]) .tab-panel,
+body.a11y-bg-cream:not([data-theme="dark"]) .menu-tabs,
+body.a11y-bg-cream:not([data-theme="dark"]) #question-container {
+  background: #FDF9F0 !important;
+}
+
+/* Masquage du timer */
+body.a11y-hide-timer #timer {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Réduction des animations */
+body.a11y-reduce-motion *,
+body.a11y-reduce-motion *::before,
+body.a11y-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Modale accessibilité */
+.a11y-modal {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+.a11y-modal[hidden] { display: none; }
+.a11y-modal-content {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.a11y-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.a11y-modal-head h2 { margin: 0; font-size: 1.25rem; }
+.a11y-section {
+  margin: 16px 0;
+  padding: 12px 14px;
+  background: var(--bg-elev, #f7f7fc);
+  border-radius: 10px;
+}
+.a11y-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.a11y-switch {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.a11y-switch input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px; height: 18px;
+  cursor: pointer;
+}
+.a11y-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+.a11y-row select {
+  padding: 6px 10px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+  background: white;
+  font-size: 0.95rem;
+}
+body[data-theme="dark"] .a11y-row select {
+  background: var(--bg-elev);
+  color: var(--text);
+}
+.a11y-actions {
+  display: flex; justify-content: space-between; gap: 10px;
+  margin-top: 16px;
+}
+
+/* Bouton 🔊 Lire la question */
+.btn-speak {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-soft, #eef2ff);
+  color: var(--accent, #6366f1);
+  border: 1px solid var(--accent, #6366f1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.btn-speak:hover { background: var(--accent, #6366f1); color: white; }
+.btn-speak.speaking { background: #10b981; color: white; border-color: #10b981; }
+
 /* Histogramme SVG */
 .histogram-container {
   margin: 12px auto;

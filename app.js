@@ -76,6 +76,131 @@ function initThemes() {
   });
 }
 
+/* ==========================================================================
+   Accessibilité — profil PAP/PPS/dys/TDAH (localStorage)
+   ========================================================================== */
+const A11Y_KEY = 'auto3br.a11y';
+const A11Y_DEFAULTS = {
+  fontLexend: false,
+  size: 'normal',      // 'normal' | 'large' | 'xlarge'
+  spacing: false,
+  bgCream: false,
+  hideTimer: false,
+  reduceMotion: false,
+  speak: false
+};
+
+function loadA11y() {
+  try { return Object.assign({}, A11Y_DEFAULTS, JSON.parse(localStorage.getItem(A11Y_KEY) || '{}')); }
+  catch (e) { return { ...A11Y_DEFAULTS }; }
+}
+function saveA11y(prefs) { localStorage.setItem(A11Y_KEY, JSON.stringify(prefs)); }
+
+function applyA11y(prefs) {
+  const b = document.body;
+  b.classList.toggle('a11y-font-lexend', prefs.fontLexend);
+  b.classList.toggle('a11y-size-large', prefs.size === 'large');
+  b.classList.toggle('a11y-size-xlarge', prefs.size === 'xlarge');
+  b.classList.toggle('a11y-spacing', prefs.spacing);
+  b.classList.toggle('a11y-bg-cream', prefs.bgCream);
+  b.classList.toggle('a11y-hide-timer', prefs.hideTimer);
+  b.classList.toggle('a11y-reduce-motion', prefs.reduceMotion);
+  b.classList.toggle('a11y-speak', prefs.speak);
+}
+
+function initA11y() {
+  const prefs = loadA11y();
+  applyA11y(prefs);
+
+  const modal = $('#a11y-modal');
+  const btnOpen = $('#btn-a11y');
+  const btnClose = $('#btn-a11y-close');
+  const btnApply = $('#btn-a11y-apply');
+  const btnReset = $('#btn-a11y-reset');
+  if (!modal || !btnOpen) return;
+
+  function syncFormFromPrefs() {
+    const p = loadA11y();
+    $('#a11y-font-lexend').checked = p.fontLexend;
+    $('#a11y-size').value = p.size;
+    $('#a11y-spacing').checked = p.spacing;
+    $('#a11y-bg-cream').checked = p.bgCream;
+    $('#a11y-hide-timer').checked = p.hideTimer;
+    $('#a11y-reduce-motion').checked = p.reduceMotion;
+    $('#a11y-speak').checked = p.speak;
+  }
+
+  function collectPrefs() {
+    return {
+      fontLexend: $('#a11y-font-lexend').checked,
+      size: $('#a11y-size').value,
+      spacing: $('#a11y-spacing').checked,
+      bgCream: $('#a11y-bg-cream').checked,
+      hideTimer: $('#a11y-hide-timer').checked,
+      reduceMotion: $('#a11y-reduce-motion').checked,
+      speak: $('#a11y-speak').checked
+    };
+  }
+
+  btnOpen.addEventListener('click', () => { syncFormFromPrefs(); modal.hidden = false; });
+  btnClose.addEventListener('click', () => { modal.hidden = true; });
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.hidden = true; });
+
+  btnApply.addEventListener('click', () => {
+    const p = collectPrefs();
+    saveA11y(p);
+    applyA11y(p);
+    modal.hidden = true;
+    // Re-rendu de la question en cours si présent (pour faire apparaître/disparaître le bouton 🔊)
+    if (state && state.series && state.series.length && document.querySelector('#screen-test.active')) {
+      renderQuestion();
+    }
+  });
+
+  btnReset.addEventListener('click', () => {
+    saveA11y({ ...A11Y_DEFAULTS });
+    applyA11y(A11Y_DEFAULTS);
+    syncFormFromPrefs();
+  });
+}
+
+/* Synthèse vocale : lit le texte de l'énoncé en français.
+   On enlève les balises HTML et simplifie les expressions LaTeX les plus courantes. */
+function a11ySpeak(text) {
+  if (!('speechSynthesis' in window)) {
+    alert("La lecture vocale n'est pas disponible sur cet appareil.");
+    return;
+  }
+  // Nettoyage HTML
+  const tmp = document.createElement('div');
+  tmp.innerHTML = text;
+  let spoken = tmp.textContent || tmp.innerText || '';
+  // Simplifications LaTeX courantes
+  spoken = spoken
+    .replace(/\\dfrac\{([^}]+)\}\{([^}]+)\}/g, '$1 sur $2')
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 sur $2')
+    .replace(/\\sqrt\{([^}]+)\}/g, 'racine carrée de $1')
+    .replace(/\\times/g, ' fois ')
+    .replace(/\\pi/g, ' pi ')
+    .replace(/\\approx/g, ' environ ')
+    .replace(/\^2/g, ' au carré')
+    .replace(/\^3/g, ' au cube')
+    .replace(/\^\{?(-?\d+)\}?/g, ' puissance $1')
+    .replace(/\\/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const utter = new SpeechSynthesisUtterance(spoken);
+  utter.lang = 'fr-FR';
+  utter.rate = 0.9;
+  window.speechSynthesis.cancel();
+
+  const btn = document.querySelector('.btn-speak');
+  if (btn) btn.classList.add('speaking');
+  utter.onend = () => { if (btn) btn.classList.remove('speaking'); };
+  window.speechSynthesis.speak(utter);
+}
+
 /* ---------- Mode sombre ---------- */
 function initDarkMode() {
   const stored = localStorage.getItem('theme-mode');
@@ -741,6 +866,11 @@ function renderQuestion() {
     </div>
   `;
 
+  const a11yPrefs = loadA11y();
+  const speakBtn = a11yPrefs.speak
+    ? `<button class="btn-speak" id="btn-speak" type="button" aria-label="Lire la question à voix haute">🔊 Lire la question</button>`
+    : '';
+
   c.innerHTML = `
     <div class="q-chip" style="color: ${meta.color || 'var(--muted)'};">
       <span class="chip-icon" style="background: ${meta.color || 'var(--muted)'};">${meta.icon || '?'}</span>
@@ -748,6 +878,7 @@ function renderQuestion() {
       <span class="chip-sep"></span>
       <span style="color: var(--muted);">${q.title}</span>
     </div>
+    ${speakBtn}
     <div class="q-body">${q.body}</div>
     ${answerBlock}
     ${state.mode === 'train' ? `
@@ -755,6 +886,13 @@ function renderQuestion() {
       <div id="help-panel" style="display:none;"></div>
     ` : ''}
   `;
+
+  if (a11yPrefs.speak) {
+    $('#btn-speak')?.addEventListener('click', () => {
+      const textToRead = q.body + (isInput ? '' : ' ' + q.choices.map((c, i) => `Réponse ${String.fromCharCode(65+i)} : ${c}`).join('. '));
+      a11ySpeak(textToRead);
+    });
+  }
 
   if (isInput) {
     const inp = $('#qinput');
@@ -2712,6 +2850,7 @@ function miniGameCheckWinAndMaybeEnd(onContinue) {
 
 /* ---------- Init ---------- */
 initDarkMode();
+initA11y();
 initTabs();
 initThemes();
 initKeyboard();

@@ -7,7 +7,7 @@
 <title>Automatismes — 3ème / Brevet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 <!-- MathJax pour afficher les fractions et formules -->
 <script>
@@ -36,9 +36,71 @@
   <h1>Automatismes — 3<sup>ème</sup> · Préparation Brevet</h1>
   <div id="header-info">
     <span id="student-badge"></span>
+    <button class="icon-btn" id="btn-a11y" title="Options d'accessibilité (dys, tiers-temps, TDAH...)" aria-label="Accessibilité">♿</button>
     <button class="icon-btn" id="btn-theme" title="Basculer mode clair / sombre" aria-label="Mode sombre">🌙</button>
   </div>
 </header>
+
+<!-- Modale Accessibilité -->
+<div id="a11y-modal" class="a11y-modal" hidden>
+  <div class="a11y-modal-content">
+    <div class="a11y-modal-head">
+      <h2>♿ Options d'accessibilité</h2>
+      <button class="icon-btn" id="btn-a11y-close" aria-label="Fermer">✕</button>
+    </div>
+    <p class="note" style="margin-top:-4px;">Ces réglages s'adressent aux élèves avec un <strong>PAP, un PPS, une notification MDPH</strong> ou tout élève ayant besoin d'un confort de lecture supplémentaire (dys, TDAH, fatigue visuelle...). Ils sont cumulables et sauvegardés sur ton appareil.</p>
+
+    <div class="a11y-section">
+      <h3>📖 Lecture / Dys</h3>
+      <label class="a11y-switch">
+        <input type="checkbox" id="a11y-font-lexend" />
+        <span><strong>Police Lexend</strong> — police adaptée aux élèves dys (plus lisible)</span>
+      </label>
+      <label class="a11y-row">
+        <span>Taille du texte</span>
+        <select id="a11y-size">
+          <option value="normal" selected>Normale</option>
+          <option value="large">Grande (+15 %)</option>
+          <option value="xlarge">Très grande (+30 %)</option>
+        </select>
+      </label>
+      <label class="a11y-switch">
+        <input type="checkbox" id="a11y-spacing" />
+        <span><strong>Interligne aéré</strong> — plus d'espace entre les lignes</span>
+      </label>
+      <label class="a11y-switch">
+        <input type="checkbox" id="a11y-bg-cream" />
+        <span><strong>Fond crème</strong> — réduit la fatigue visuelle (lecture longue)</span>
+      </label>
+    </div>
+
+    <div class="a11y-section">
+      <h3>🧠 Concentration / Stress</h3>
+      <label class="a11y-switch">
+        <input type="checkbox" id="a11y-hide-timer" />
+        <span><strong>Masquer le timer</strong> pendant l'évaluation (réduit l'anxiété)</span>
+      </label>
+      <label class="a11y-switch">
+        <input type="checkbox" id="a11y-reduce-motion" />
+        <span><strong>Réduire les animations</strong> — moins de transitions</span>
+      </label>
+    </div>
+
+    <div class="a11y-section">
+      <h3>🔊 Lecture vocale</h3>
+      <label class="a11y-switch">
+        <input type="checkbox" id="a11y-speak" />
+        <span>Afficher le bouton <strong>🔊 Lire la question</strong> sur chaque question (élèves TSL/dys)</span>
+      </label>
+      <p class="note" style="margin:4px 0 0 0;font-size:0.8rem;">Utilise la synthèse vocale de ton appareil. Les formules mathématiques sont lues en français simple.</p>
+    </div>
+
+    <div class="a11y-actions">
+      <button class="ghost" id="btn-a11y-reset">Tout réinitialiser</button>
+      <button class="primary" id="btn-a11y-apply">Appliquer</button>
+    </div>
+  </div>
+</div>
 
 <main id="app">
 
