@@ -1168,8 +1168,10 @@ function renderParcours() {
     </div>
   `;
 
-  if (!completed && !done) {
-    $('#btn-session-day').addEventListener('click', () => startParcoursSession(p, day));
+  // Attacher le listener si le bouton est présent (c.-à-d. si le joueur peut faire une séance)
+  const sessionBtn = $('#btn-session-day');
+  if (sessionBtn) {
+    sessionBtn.addEventListener('click', () => startParcoursSession(p, day));
   }
   $('#btn-reset-parcours')?.addEventListener('click', () => {
     if (confirm('Réinitialiser le parcours ? Toute la progression actuelle sera perdue.')) {
