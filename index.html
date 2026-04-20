@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#4f46e5" />
+<title>Automatismes — 3ème / Brevet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<!-- MathJax pour afficher les fractions et formules -->
+<script>
+  MathJax = {
+    tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+
+<!-- Formulaire détecté par Netlify au build. Invisible et jamais soumis par l'utilisateur,
+     mais nécessaire pour que Netlify accepte les POST fetch('/'). -->
+<form name="rapport-eleve" netlify netlify-honeypot="bot-field" hidden>
+  <input type="text" name="prenom" />
+  <input type="text" name="classe" />
+  <input type="text" name="nb_sessions" />
+  <input type="text" name="pct_global" />
+  <textarea name="rapport"></textarea>
+  <input type="text" name="bot-field" />
+</form>
+
+<header>
+  <h1>Automatismes — 3<sup>ème</sup> · Préparation Brevet</h1>
+  <div id="header-info">
+    <span id="student-badge"></span>
+    <button class="icon-btn" id="btn-theme" title="Basculer mode clair / sombre" aria-label="Mode sombre">🌙</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ÉCRAN ACCUEIL -->
+  <section id="screen-home" class="screen active">
+    <div class="menu-tabs">
+      <button class="tab-btn active" data-target="tab-eval">📝 S'évaluer</button>
+      <button class="tab-btn" data-target="tab-parcours">🎯 Mon programme</button>
+      <button class="tab-btn" data-target="tab-duel">⚔ Duel</button>
+      <button class="tab-btn" data-target="tab-revision">📚 Fiches & outils</button>
+    </div>
+
+    <!-- Onglet : évaluation -->
+    <div id="tab-eval" class="tab-panel active">
+      <h2>📝 S'évaluer comme au Brevet</h2>
+      <p class="lead">9 questions tirées de tous les thèmes · 20 min chrono · sans calculatrice · note sur 6 à la fin, comme le jour J.</p>
+
+      <div class="card" style="background: linear-gradient(135deg, var(--accent-soft) 0%, rgba(236,72,153,0.06) 100%); border-left: 4px solid var(--accent);">
+        <p style="margin:0;font-size:0.95rem;">
+          ⏱ <strong>Conditions réelles</strong> : timer obligatoire, aucune aide pendant l'épreuve, tous les thèmes du programme mélangés.<br>
+          📊 <strong>À la fin</strong> : corrigé détaillé question par question + <strong>note sur 6</strong>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Durée</h3>
+        <label class="check"><input type="radio" name="duree" value="1200" checked /> 20 min (format officiel)</label>
+        <label class="check"><input type="radio" name="duree" value="900" /> 15 min (un peu plus rapide)</label>
+        <label class="check"><input type="radio" name="duree" value="600" /> 10 min (challenge express)</label>
+      </div>
+
+      <button id="btn-start" class="primary big-btn">▶ Commencer l'évaluation</button>
+      <p class="note">Calculatrice <em>non autorisée</em>. Valeurs tirées au hasard, toujours calculables mentalement ou posées simplement. Pour t'entraîner librement (avec aide + choix des thèmes), utilise plutôt <strong>🎯 Mon programme</strong> ou les <strong>📚 Fiches &amp; outils</strong>.</p>
+    </div>
+
+    <!-- Onglet : mon programme -->
+    <div id="tab-parcours" class="tab-panel">
+      <h2>🎯 Mon programme</h2>
+      <p class="lead">Ton programme personnel avec <strong>répétition espacée</strong> : ce que tu maîtrises revient moins souvent, ce qui te pose problème revient plus souvent. Tu retiens mieux et plus longtemps. <strong>Max 3 séances / jour</strong> pour laisser le cerveau assimiler.</p>
+      <div id="parcours-content"></div>
+    </div>
+
+    <!-- Onglet : duel -->
+    <div id="tab-duel" class="tab-panel">
+      <h2>⚔ Duel à deux</h2>
+      <p class="lead">Défi joueur contre joueur sur le même appareil, chacun son tour. Gagne des XP, débloque des badges, grimpe dans le classement.</p>
+
+      <div class="card duel-setup-card">
+        <h3>Les joueurs</h3>
+        <div class="duel-players-setup">
+          <div class="duel-player-input">
+            <label>Joueur 1</label>
+            <input type="text" id="duel-p1" placeholder="Prénom" maxlength="15" autocomplete="off" />
+            <div class="duel-avatar" id="duel-avatar-1">?</div>
+          </div>
+          <span class="vs-badge">VS</span>
+          <div class="duel-player-input">
+            <label>Joueur 2</label>
+            <input type="text" id="duel-p2" placeholder="Prénom" maxlength="15" autocomplete="off" />
+            <div class="duel-avatar" id="duel-avatar-2">?</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Configuration du duel</h3>
+        <div class="duel-config">
+          <label>
+            <span>Mode des thèmes</span>
+            <select id="duel-theme-mode">
+              <option value="random" selected>🎲 Aléatoire — tous les thèmes mélangés</option>
+              <option value="strategic">🎯 Stratégique — chaque joueur choisit 2 thèmes (ses forts)</option>
+              <option value="homeaway">🏟 Aller-retour — chacun choisit 1-2 thèmes à domicile (+ belle si égalité)</option>
+            </select>
+          </label>
+          <label id="duel-theme-row">
+            <span>Thème (si aléatoire)</span>
+            <select id="duel-theme"></select>
+          </label>
+          <label>
+            <span>Nombre de questions</span>
+            <select id="duel-nbq">
+              <option value="5">5 questions</option>
+              <option value="7" selected>7 questions</option>
+              <option value="10">10 questions</option>
+            </select>
+          </label>
+          <label>
+            <span>Mode</span>
+            <select id="duel-mode">
+              <option value="normal" selected>Normal (sans timer)</option>
+              <option value="fast">⚡ Rapide (15 s / question)</option>
+            </select>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="duel-mobile" />
+            <span>📱 <strong>Mode mobile</strong> — QCM courts uniquement (meilleure lisibilité sur téléphone)</span>
+          </label>
+          <label>
+            <span>Mini-jeu stratégique (bonne réponse = coup joué)</span>
+            <select id="duel-minigame">
+              <option value="none" selected>Aucun — score classique au cumul</option>
+              <option value="connect4">🔴 Puissance 4 — aligne 4 pions pour gagner</option>
+              <option value="race">🏇 Course de pions — premier arrivé à la case 12</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Choix stratégique des thèmes (visible uniquement en mode stratégique/aller-retour) -->
+      <div class="card" id="duel-strategic-themes" style="display:none;">
+        <h3 id="strat-title">🎯 Choix des thèmes</h3>
+        <p class="note" id="strat-desc" style="margin-top:-4px;">Chaque joueur choisit ses 2 thèmes.</p>
+        <div class="duel-strategic-grid">
+          <div class="duel-strategic-col" data-player="1">
+            <h4 id="strat-label-1">Joueur 1</h4>
+            <div class="strat-themes-list" id="strat-themes-1"></div>
+            <div class="strat-count" id="strat-count-1">0 / 2 thèmes choisis</div>
+          </div>
+          <div class="duel-strategic-col" data-player="2">
+            <h4 id="strat-label-2">Joueur 2</h4>
+            <div class="strat-themes-list" id="strat-themes-2"></div>
+            <div class="strat-count" id="strat-count-2">0 / 2 thèmes choisis</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-start-duel" class="primary big-btn">⚔ Lancer le duel</button>
+
+      <h3 class="duel-section-title">🏆 Classement local</h3>
+      <div id="duel-ranking"></div>
+
+      <h3 class="duel-section-title">🎖 Profils joueurs</h3>
+      <div id="duel-profiles"></div>
+    </div>
+
+    <!-- Onglet : fiches de révision -->
+    <div id="tab-revision" class="tab-panel">
+      <h2>Fiches de révision</h2>
+      <p class="lead">Cours, savoir-faire et erreurs à éviter, classés par compétence. Aucune évaluation ici — à consulter librement.</p>
+      <div id="revision-content"></div>
+    </div>
+  </section>
+
+  <!-- ÉCRAN TEST -->
+  <section id="screen-test" class="screen">
+    <div class="test-header">
+      <div id="timer" class="timer">20:00</div>
+      <div id="progress" class="progress">Question 1/12</div>
+      <button id="btn-finish" class="ghost">Valider</button>
+    </div>
+
+    <div id="question-container"></div>
+
+    <nav class="test-nav">
+      <button id="btn-prev" class="ghost">← Précédent</button>
+      <div id="qdots"></div>
+      <button id="btn-next" class="ghost">Suivant →</button>
+    </nav>
+  </section>
+
+  <!-- ÉCRAN DUEL (partie en cours) -->
+  <section id="screen-duel" class="screen">
+    <div class="duel-header">
+      <button id="btn-quit-duel" class="ghost small">← Quitter</button>
+      <div class="duel-question-progress">
+        <span id="duel-qnum">Question 1/7</span>
+        <div class="duel-pbar"><div id="duel-pbar-fill" class="duel-pbar-fill"></div></div>
+      </div>
+      <div id="duel-timer" class="duel-timer" style="display:none;">15</div>
+    </div>
+
+    <div class="duel-scoreboard">
+      <div class="duel-player-card" id="duel-p1-card">
+        <div class="duel-avatar-mini" id="duel-mini-1"></div>
+        <div class="duel-pc-body">
+          <div class="duel-pc-name" id="duel-pc-name-1">—</div>
+          <div class="duel-pc-score" id="duel-pc-score-1">0</div>
+        </div>
+      </div>
+      <div class="duel-vs-mini">VS</div>
+      <div class="duel-player-card" id="duel-p2-card">
+        <div class="duel-avatar-mini" id="duel-mini-2"></div>
+        <div class="duel-pc-body">
+          <div class="duel-pc-name" id="duel-pc-name-2">—</div>
+          <div class="duel-pc-score" id="duel-pc-score-2">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="duel-turn-banner" class="duel-turn-banner"></div>
+
+    <div id="duel-question-container" class="duel-question-container"></div>
+  </section>
+
+  <!-- ÉCRAN RÉSULTATS DUEL -->
+  <section id="screen-duel-results" class="screen">
+    <div id="duel-results-content"></div>
+  </section>
+
+  <!-- ÉCRAN RÉSULTATS -->
+  <section id="screen-results" class="screen">
+    <h2>Résultats</h2>
+    <div id="score-box"></div>
+    <div id="results-list"></div>
+    <div class="actions">
+      <button id="btn-retry-wrong" class="primary">S'entraîner sur les erreurs</button>
+      <button id="btn-new-test" class="ghost">Nouvelle série (valeurs différentes)</button>
+      <button id="btn-home" class="ghost">Accueil</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <small>Automatismes 3ème — entraînement à la partie 1 du Brevet des collèges.</small>
+</footer>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
