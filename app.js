@@ -1545,10 +1545,18 @@ function startDuel() {
 }
 
 function renderDuelScoreboard() {
+  // En mode Puissance 4, on force les couleurs P4 : bleu pour J1, orange pour J2
+  // En Course de pions aussi. En mode classique, on utilise l'avatar couleur prénom.
+  const useFixedColors = duelState.miniGame === 'connect4' || duelState.miniGame === 'race';
+  const fixedColors = [
+    { main: '#3b82f6', dark: '#1e40af' },  // bleu P4
+    { main: '#f59e0b', dark: '#b45309' }   // orange P4
+  ];
   duelState.players.forEach((p, i) => {
-    const miniBg = `linear-gradient(135deg, ${p.color} 0%, ${avatarColor(p.name+'_')} 100%)`;
-    $(`#duel-mini-${i+1}`).style.background = miniBg;
-    $(`#duel-mini-${i+1}`).textContent = p.initial;
+    const c = useFixedColors ? fixedColors[i] : { main: p.color, dark: avatarColor(p.name+'_') };
+    const miniBg = `radial-gradient(circle at 35% 35%, ${c.main} 0%, ${c.dark} 100%)`;
+    const el = $(`#duel-mini-${i+1}`);
+    if (el) { el.style.background = miniBg; el.textContent = p.initial; }
     $(`#duel-pc-name-${i+1}`).textContent = p.name;
     $(`#duel-pc-score-${i+1}`).textContent = duelState.scores[i];
   });
@@ -2505,14 +2513,18 @@ function miniGamePlayMove(onDone) {
   const pIdx = duelState.currentIdx;
   const state = duelState.miniGameState;
   if (duelState.miniGame === 'connect4') {
-    // Afficher grille interactive + message
+    // Afficher grille interactive + message très visible
     const container = $('#duel-question-container');
+    const pionColor = pIdx === 0 ? '#3b82f6' : '#f59e0b';
+    const pionColorDark = pIdx === 0 ? '#1e40af' : '#b45309';
+    const pionSvg = `<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 35%,${pionColor} 0%,${pionColorDark} 100%);box-shadow:0 2px 4px rgba(0,0,0,0.25);vertical-align:middle;margin-right:8px;"></span>`;
     container.innerHTML = `
+      <div style="background:linear-gradient(90deg, ${pionColor} 0%, ${pionColorDark} 100%);color:white;padding:14px 18px;border-radius:12px;margin-bottom:14px;text-align:center;font-weight:700;font-size:1.05rem;box-shadow:0 4px 12px ${pionColor}55;">
+        ${pionSvg}✓ Bonne réponse ! ${duelState.players[pIdx].name}, place ton pion dans la colonne de ton choix ↓
+      </div>
       <div class="minigame-box">
-        <h4>🔴 Puissance 4 — ${duelState.players[pIdx].name}, choisis une colonne !</h4>
         ${renderConnect4(state, pIdx)}
       </div>
-      <div class="minigame-status active-p${pIdx+1}">Clique sur une colonne ↓ pour placer ton pion</div>
     `;
     container.querySelectorAll('.c4-col.playable, .c4-arrow.active').forEach(el => {
       el.addEventListener('click', () => {
@@ -2531,17 +2543,21 @@ function miniGamePlayMove(onDone) {
     });
   } else if (duelState.miniGame === 'race') {
     const result = race_advance(state, pIdx, 1);
-    const bonusMsg = result.bonus === 1 ? ` <strong style="color:#10b981;">+1 bonus !</strong>`
-      : result.bonus === -1 ? ` <strong style="color:#ef4444;">−1 malus !</strong>` : '';
+    const bonusMsg = result.bonus === 1 ? ` <strong>+1 bonus !</strong>`
+      : result.bonus === -1 ? ` <strong>−1 malus !</strong>` : '';
+    const pionColor = pIdx === 0 ? '#3b82f6' : '#f59e0b';
+    const pionColorDark = pIdx === 0 ? '#1e40af' : '#b45309';
+    const pionSvg = `<span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,${pionColor} 0%,${pionColorDark} 100%);vertical-align:middle;margin-right:8px;"></span>`;
     const container = $('#duel-question-container');
     container.innerHTML = `
+      <div style="background:linear-gradient(90deg, ${pionColor} 0%, ${pionColorDark} 100%);color:white;padding:14px 18px;border-radius:12px;margin-bottom:14px;text-align:center;font-weight:700;font-size:1.05rem;box-shadow:0 4px 12px ${pionColor}55;">
+        ${pionSvg}✓ Bonne réponse ! ${duelState.players[pIdx].name} avance d'une case${bonusMsg}
+      </div>
       <div class="minigame-box">
-        <h4>🏇 Course de pions</h4>
         ${renderRace(state, duelState.players)}
       </div>
-      <div class="minigame-status active-p${pIdx+1}">${duelState.players[pIdx].name} avance d'une case !${bonusMsg}</div>
     `;
-    setTimeout(onDone, 1200);
+    setTimeout(onDone, 1600);
   } else {
     onDone();
   }
