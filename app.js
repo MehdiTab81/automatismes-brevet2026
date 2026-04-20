@@ -49,6 +49,7 @@ function initTabs() {
 /* ---------- Peuplement dynamique des thèmes (home) ---------- */
 function initThemes() {
   const list = $('#themes-list');
+  if (!list) return; // onglet "S'évaluer" simplifié : pas de liste de thèmes
   list.innerHTML = Object.entries(THEME_META).map(([id, meta]) => `
     <label class="theme-pill selected" data-theme="${id}" style="color: ${meta.color};">
       <input type="checkbox" name="theme" value="${id}" checked />
