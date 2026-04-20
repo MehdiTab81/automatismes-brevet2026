@@ -750,7 +750,8 @@ function exportForTeacher() {
 
 /* ---------- Démarrer l'évaluation ---------- */
 $('#btn-start').addEventListener('click', () => {
-  // Mode évaluation officiel : timer obligatoire, tous thèmes mélangés, pas d'aide
+  // Mode évaluation officiel : timer obligatoire et visible (même si l'option "masquer timer"
+  // est cochée dans l'accessibilité), tous thèmes mélangés, pas d'aide.
   const duree = parseInt(document.querySelector('input[name=duree]:checked').value, 10) || 1200;
   state.mode = 'eval';
   state.duree = duree;
@@ -759,6 +760,7 @@ $('#btn-start').addEventListener('click', () => {
   state.current = 0;
   state.startedAt = Date.now();
   state.remaining = duree;
+  document.body.classList.add('evaluating'); // force l'affichage du chrono
   startTimer();
   showScreen('screen-test');
   renderQuestion();
@@ -1005,6 +1007,7 @@ function isAnswerCorrect(q, a) {
 /* ---------- Fin du test → résultats ---------- */
 function finishTest() {
   clearInterval(state.timer);
+  document.body.classList.remove('evaluating');
   const score = state.answers.reduce((s, a, i) =>
     s + (isAnswerCorrect(state.series[i], a) ? 1 : 0), 0);
   const withHelp = state.answers.filter(a => a.helped).length;

@@ -761,10 +761,14 @@ body.a11y-bg-cream:not([data-theme="dark"]) #question-container {
   background: #FDF9F0 !important;
 }
 
-/* Masquage du timer */
+/* Masquage du timer (sauf en mode évaluation officielle : conditions du jour J) */
 body.a11y-hide-timer #timer {
   visibility: hidden !important;
   opacity: 0 !important;
+}
+body.evaluating #timer {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Réduction des animations */
