@@ -3470,11 +3470,12 @@ function scratchPathCBlock(x, y, w, topH, innerH, botH) {
      {v:nom}   → pastille "variable" (même famille que le bloc parent, plus foncée)
      {n:12}    → pastille "nombre" (fond blanc, texte foncé)
      {op:expr} → pastille "opérateur" (fond vert)
+     {t:texte} → pastille "texte" (fond blanc, texte foncé ; idem n)
    Tout le reste est rendu en texte blanc simple. */
 const CHAR_W = 7;  // estimation largeur caractère à font-size ~12
 function scratchRenderContent(x0, y, h, text) {
   const tokens = [];
-  const re = /\{(v|n|op):([^{}]+)\}/g;
+  const re = /\{(v|n|op|t):([^{}]+)\}/g;
   let lastIdx = 0, m;
   while ((m = re.exec(text)) !== null) {
     if (m.index > lastIdx) tokens.push({ kind: 'label', value: text.slice(lastIdx, m.index) });
@@ -3502,7 +3503,7 @@ function scratchRenderContent(x0, y, h, text) {
       const w = Math.max(22, textW + pad * 2);
       let pillFill, textFill;
       if (t.kind === 'v') { pillFill = 'rgba(0,0,0,0.18)'; textFill = 'white'; }
-      else if (t.kind === 'n') { pillFill = 'white'; textFill = '#1a1a1a'; }
+      else if (t.kind === 'n' || t.kind === 't') { pillFill = 'white'; textFill = '#1a1a1a'; }
       else { pillFill = SCRATCH_COLORS.operator; textFill = 'white'; }
       svg += `<rect x="${cx}" y="${cy - pillH/2}" width="${w}" height="${pillH}" rx="${pillH/2}" fill="${pillFill}" stroke="rgba(0,0,0,0.15)" stroke-width="0.6"/>`;
       svg += `<text x="${cx + w/2}" y="${cy + 4}" fill="${textFill}" font-size="12" font-weight="600" text-anchor="middle" font-family="ui-sans-serif,system-ui">${value}</text>`;
