@@ -696,6 +696,43 @@ body[data-theme="dark"] .flashcard.viewed .flashcard-front::before {
 .revision-theme-count.partial { background: var(--warn-soft); color: var(--warn); }
 .revision-theme-count.complete { background: var(--ok-soft); color: var(--ok); }
 
+/* Tableau à double entrée (probabilités 2 épreuves) */
+.proba-table {
+  border-collapse: collapse;
+  margin: 12px auto;
+  font-size: 0.95rem;
+}
+.proba-table th, .proba-table td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: center;
+  min-width: 40px;
+}
+.proba-table thead th, .proba-table tbody th {
+  background: var(--bg-elev);
+  font-weight: 600;
+}
+.proba-table td.hit {
+  background: rgba(16, 185, 129, 0.22);
+  font-weight: 700;
+  color: var(--ok);
+}
+body[data-theme="dark"] .proba-table td.hit {
+  background: rgba(16, 185, 129, 0.32);
+  color: #a7f3d0;
+}
+
+/* Histogramme SVG */
+.histogram-container {
+  margin: 12px auto;
+  max-width: 420px;
+}
+.histogram-container svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* État « aucun résultat » */
 .revision-empty {
   text-align: center;

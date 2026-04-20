@@ -468,6 +468,99 @@ function t1_nombre_premier() {
   };
 }
 
+/* ------------------------------------------------------------------
+   Racine carrée — attendu Brevet 2025 p.2 :
+   "valeur exacte du côté d'un carré d'aire donnée" + encadrement
+   ------------------------------------------------------------------ */
+function t1_racine_carre_parfait() {
+  const cases = [
+    { a: 1, r: 1 }, { a: 4, r: 2 }, { a: 9, r: 3 }, { a: 16, r: 4 },
+    { a: 25, r: 5 }, { a: 36, r: 6 }, { a: 49, r: 7 }, { a: 64, r: 8 },
+    { a: 81, r: 9 }, { a: 100, r: 10 }, { a: 121, r: 11 }, { a: 144, r: 12 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'calcul', title: 'Racine carrée — côté d\'un carré',
+    body: `Un carré a une aire de ${k.a} cm². Quelle est la longueur de son côté (en cm) ?`,
+    type: 'input', expected: String(k.r), suffix: 'cm',
+    solution: `On cherche le nombre positif qui, multiplié par lui-même, donne ${k.a}. Or \\(${k.r} \\times ${k.r} = ${k.a}\\), donc \\(\\sqrt{${k.a}} = ${k.r}\\). Le côté mesure <b>${k.r} cm</b>.`,
+    help: {
+      cours: "\\(\\sqrt{a}\\) (pour \\(a \\geq 0\\)) est le <b>nombre positif</b> qui, élevé au carré, donne \\(a\\). Par exemple \\(\\sqrt{81} = 9\\) car \\(9^2 = 81\\).",
+      savoirFaire: "Connaître par cœur les 12 premiers carrés parfaits : \\(1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144\\).",
+      erreurs: ["Répondre en cm² au lieu de cm.", "Diviser l'aire par 2 au lieu de prendre la racine.", "Confondre \\(a^2\\) et \\(\\sqrt{a}\\)."]
+    }
+  };
+}
+
+function t1_racine_encadrement() {
+  // Cases: n non-carré parfait entre 2 et 144
+  const cases = [
+    { n: 2,  lo: 1, hi: 2 },  { n: 5, lo: 2, hi: 3 },  { n: 8, lo: 2, hi: 3 },
+    { n: 10, lo: 3, hi: 4 },  { n: 12, lo: 3, hi: 4 }, { n: 15, lo: 3, hi: 4 },
+    { n: 20, lo: 4, hi: 5 },  { n: 23, lo: 4, hi: 5 }, { n: 30, lo: 5, hi: 6 },
+    { n: 40, lo: 6, hi: 7 },  { n: 50, lo: 7, hi: 8 }, { n: 60, lo: 7, hi: 8 },
+    { n: 75, lo: 8, hi: 9 },  { n: 90, lo: 9, hi: 10 },{ n: 110, lo: 10, hi: 11 },
+    { n: 130, lo: 11, hi: 12 }
+  ];
+  const k = pick(cases);
+  const correct = `entre ${k.lo} et ${k.hi}`;
+  const distract = [
+    `entre ${k.lo - 1} et ${k.lo}`,
+    `entre ${k.hi} et ${k.hi + 1}`,
+    `entre ${Math.floor(k.n/2)} et ${Math.floor(k.n/2)+1}`
+  ].filter(d => d !== correct);
+  const { choices, correctIdx } = makeQCM([
+    { html: correct, correct: true },
+    ...shuffle(distract).slice(0, 3).map(d => ({ html: d, correct: false }))
+  ]);
+  return {
+    theme: 'calcul', title: 'Racine carrée — encadrement',
+    body: `L'aire d'un carré est ${k.n} cm². Entre quels deux entiers consécutifs est compris son côté (en cm) ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: `\\(${k.lo}^2 = ${k.lo*k.lo}\\) et \\(${k.hi}^2 = ${k.hi*k.hi}\\). Comme \\(${k.lo*k.lo} < ${k.n} < ${k.hi*k.hi}\\), on a \\(${k.lo} < \\sqrt{${k.n}} < ${k.hi}\\). Le côté est compris <b>entre ${k.lo} cm et ${k.hi} cm</b>.`,
+    help: {
+      cours: "Pour encadrer \\(\\sqrt{n}\\), on cherche les deux carrés parfaits qui entourent \\(n\\).",
+      savoirFaire: "Exemple : pour \\(\\sqrt{20}\\), je cherche : \\(16 < 20 < 25\\), donc \\(4 < \\sqrt{20} < 5\\).",
+      erreurs: ["Diviser \\(n\\) par 2.", "Oublier que \\(\\sqrt{n}\\) est entre \\(\\sqrt{\\text{carré inf.}}\\) et \\(\\sqrt{\\text{carré sup.}}\\).", "Inverser l'ordre des bornes."]
+    }
+  };
+}
+
+function t1_racine_arrondi() {
+  // On donne une valeur approchée précise et l'élève l'arrondit à la précision demandée
+  const cases = [
+    { n: 17, approx: '4{,}12310...', dixieme: '4,1', centieme: '4,12', unite: '4' },
+    { n: 7,  approx: '2{,}64575...', dixieme: '2,6', centieme: '2,65', unite: '3' },
+    { n: 11, approx: '3{,}31662...', dixieme: '3,3', centieme: '3,32', unite: '3' },
+    { n: 13, approx: '3{,}60555...', dixieme: '3,6', centieme: '3,61', unite: '4' },
+    { n: 29, approx: '5{,}38516...', dixieme: '5,4', centieme: '5,39', unite: '5' },
+    { n: 43, approx: '6{,}55743...', dixieme: '6,6', centieme: '6,56', unite: '7' },
+    { n: 55, approx: '7{,}41619...', dixieme: '7,4', centieme: '7,42', unite: '7' }
+  ];
+  const k = pick(cases);
+  const precisions = [
+    { label: "au dixième (1 chiffre après la virgule)", val: k.dixieme, distract: [k.centieme, k.unite, k.dixieme.replace(',', ',0')] },
+    { label: "au centième (2 chiffres après la virgule)", val: k.centieme, distract: [k.dixieme, k.unite, k.centieme.slice(0, -1)] },
+    { label: "à l'unité", val: k.unite, distract: [k.dixieme, k.centieme, String(parseInt(k.unite) + 1)] }
+  ];
+  const p = pick(precisions);
+  const { choices, correctIdx } = makeQCM([
+    { html: p.val, correct: true },
+    ...shuffle(p.distract).slice(0, 3).map(d => ({ html: d, correct: false }))
+  ]);
+  return {
+    theme: 'calcul', title: 'Racine carrée — arrondi',
+    body: `On donne \\(\\sqrt{${k.n}} \\approx ${k.approx}\\).<br>Arrondi ${p.label}, \\(\\sqrt{${k.n}}\\) vaut :`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Pour arrondir ${p.label}, on regarde le chiffre suivant : s'il est \\(\\geq 5\\) on arrondit au-dessus, sinon au-dessous. On obtient <b>${p.val}</b>.`,
+    help: {
+      cours: "Pour <b>arrondir</b> un nombre décimal, on regarde le chiffre <b>juste après</b> la précision voulue : s'il est \\(\\geq 5\\) on augmente d'un cran, sinon on garde.",
+      savoirFaire: "Exemple : \\(\\sqrt{17} \\approx 4{,}12310...\\). Au dixième → je regarde le 2 : \\(2 < 5\\), donc j'arrondis à 4,1.",
+      erreurs: ["Tronquer au lieu d'arrondir.", "Se tromper de chiffre regardé.", "Oublier la virgule."]
+    }
+  };
+}
+
 /* ==========================================================================
    THÈME 2 — PROPORTIONNALITÉ, POURCENTAGES, VITESSES
    ========================================================================== */
@@ -573,6 +666,92 @@ function t2_conversion() {
       cours: "Équivalences à retenir : 1 h = 60 min, 1 min = 60 s ; 1 m = 100 cm, 1 km = 1000 m ; 1 kg = 1000 g ; 1 L = 1000 mL.",
       savoirFaire: "Multiplier pour aller vers une unité plus petite, diviser pour aller vers une plus grande.",
       erreurs: ["Confondre ×1000 et ÷1000.", "Oublier une zéro.", "Confondre les unités."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Coefficient multiplicateur — attendu Brevet 2025 p.5 :
+   "Il utilise le lien entre pourcentage d'évolution et coefficient
+   multiplicateur. Augmentation de 5 % → ×1,05 ; diminution de 20 % → ×0,8."
+   ------------------------------------------------------------------ */
+function t2_coef_multiplicateur() {
+  const cases = [
+    // Augmentations
+    { pct: 5, sens: 'augmentation', coef: '1,05' },
+    { pct: 10, sens: 'augmentation', coef: '1,10' },
+    { pct: 15, sens: 'augmentation', coef: '1,15' },
+    { pct: 20, sens: 'augmentation', coef: '1,20' },
+    { pct: 25, sens: 'augmentation', coef: '1,25' },
+    { pct: 50, sens: 'augmentation', coef: '1,50' },
+    { pct: 3, sens: 'augmentation', coef: '1,03' },
+    { pct: 8, sens: 'augmentation', coef: '1,08' },
+    // Diminutions
+    { pct: 5, sens: 'diminution', coef: '0,95' },
+    { pct: 10, sens: 'diminution', coef: '0,90' },
+    { pct: 20, sens: 'diminution', coef: '0,80' },
+    { pct: 25, sens: 'diminution', coef: '0,75' },
+    { pct: 30, sens: 'diminution', coef: '0,70' },
+    { pct: 50, sens: 'diminution', coef: '0,50' },
+    { pct: 40, sens: 'diminution', coef: '0,60' }
+  ];
+  const k = pick(cases);
+  // Distracteurs plausibles
+  const oppositeCoef = k.sens === 'augmentation'
+    ? String((1 - k.pct / 100).toFixed(2)).replace('.', ',')
+    : String((1 + k.pct / 100).toFixed(2)).replace('.', ',');
+  const naif = (k.pct / 100).toString().replace('.', ','); // ex : 0,05 au lieu de 1,05
+  const inverse = k.sens === 'augmentation'
+    ? (1 + k.pct).toString().replace('.', ',')  // ex : 6 au lieu de 1,05
+    : (1 - k.pct / 10).toString().replace('.', ',');
+  const distract = [oppositeCoef, naif, inverse].filter(d => d !== k.coef);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.coef, correct: true },
+    ...shuffle(distract).slice(0, 3).map(d => ({ html: d, correct: false }))
+  ]);
+  return {
+    theme: 'pourcent', title: 'Coefficient multiplicateur',
+    body: `Quel est le coefficient multiplicateur associé à une <b>${k.sens} de ${k.pct}&nbsp;%</b> ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: k.sens === 'augmentation'
+      ? `Augmenter de ${k.pct}&nbsp;% revient à multiplier par \\(1 + \\dfrac{${k.pct}}{100} = ${k.coef}\\).`
+      : `Diminuer de ${k.pct}&nbsp;% revient à multiplier par \\(1 - \\dfrac{${k.pct}}{100} = ${k.coef}\\).`,
+    help: {
+      cours: "Augmenter de \\(t\\%\\) → multiplier par \\(1 + \\dfrac{t}{100}\\). Diminuer de \\(t\\%\\) → multiplier par \\(1 - \\dfrac{t}{100}\\).",
+      savoirFaire: "Retenir : +5% → ×1,05 ; −20% → ×0,80 ; +50% → ×1,50.",
+      erreurs: ["Confondre \\(0{,}05\\) (juste le pourcentage) et \\(1{,}05\\) (coefficient).", "Utiliser le même coefficient pour augmentation ET diminution.", "Se tromper de signe (+/−)."]
+    }
+  };
+}
+
+function t2_coef_mult_application() {
+  // Application directe : "Un prix de 80 € augmente de 25%. Nouveau prix ?"
+  const cases = [
+    { p0: 80,  pct: 25, sens: '+', pf: 100 }, // 80 × 1,25 = 100
+    { p0: 200, pct: 10, sens: '+', pf: 220 },
+    { p0: 50,  pct: 20, sens: '+', pf: 60 },
+    { p0: 40,  pct: 50, sens: '+', pf: 60 },
+    { p0: 100, pct: 15, sens: '+', pf: 115 },
+    { p0: 60,  pct: 50, sens: '-', pf: 30 },
+    { p0: 80,  pct: 25, sens: '-', pf: 60 },
+    { p0: 200, pct: 20, sens: '-', pf: 160 },
+    { p0: 150, pct: 10, sens: '-', pf: 135 },
+    { p0: 400, pct: 30, sens: '-', pf: 280 }
+  ];
+  const k = pick(cases);
+  const coef = k.sens === '+'
+    ? (1 + k.pct / 100).toString().replace('.', ',')
+    : (1 - k.pct / 100).toString().replace('.', ',');
+  const mot = k.sens === '+' ? 'augmente' : 'diminue';
+  return {
+    theme: 'pourcent', title: 'Évolution en pourcentage',
+    body: `Un article coûte ${k.p0}&nbsp;€. Son prix ${mot} de ${k.pct}&nbsp;%. Quel est le nouveau prix (en €) ?`,
+    type: 'input', expected: String(k.pf), suffix: '€',
+    solution: `${mot === 'augmente' ? 'Augmenter' : 'Diminuer'} de ${k.pct}&nbsp;%, c'est multiplier par ${coef}. Nouveau prix : \\(${k.p0} \\times ${coef} = ${k.pf}\\)&nbsp;€.`,
+    help: {
+      cours: "Pour appliquer une évolution en pourcentage, on multiplie par le <b>coefficient multiplicateur</b> : \\(1 + \\dfrac{t}{100}\\) pour une hausse, \\(1 - \\dfrac{t}{100}\\) pour une baisse.",
+      savoirFaire: "Écrire : nouveau prix = ancien prix × coefficient.",
+      erreurs: ["Ajouter \\(t\\%\\) du prix au lieu de multiplier (piège avec % > 10%).", "Confondre +25% et ×0,25.", "Appliquer deux fois un +10% pour faire +20% (faux, car ×1,1 × 1,1 = ×1,21)."]
     }
   };
 }
@@ -800,6 +979,87 @@ function t3_equation_produit() {
       cours: "<b>Équation-produit nul</b> : \\(A \\times B = 0 \\iff A = 0 \\text{ ou } B = 0\\). On résout les deux équations simples séparément.",
       savoirFaire: "Écrire chaque facteur = 0, résoudre, et rassembler les solutions.",
       erreurs: ["Distribuer et développer (on perd les solutions).", "Oublier une des deux solutions.", "Se tromper de signe en isolant."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Équation x² = a — attendu Brevet 2025 p.3 : "x² = 20"
+   ------------------------------------------------------------------ */
+function t3_equation_x_carre() {
+  const cases = [
+    { a: 9, sol: '-3 \\text{ et } 3' },
+    { a: 16, sol: '-4 \\text{ et } 4' },
+    { a: 25, sol: '-5 \\text{ et } 5' },
+    { a: 36, sol: '-6 \\text{ et } 6' },
+    { a: 49, sol: '-7 \\text{ et } 7' },
+    { a: 64, sol: '-8 \\text{ et } 8' },
+    { a: 100, sol: '-10 \\text{ et } 10' },
+    { a: 0, sol: '0' },
+    { a: -4, sol: 'aucune solution' }
+  ];
+  const k = pick(cases);
+  const distract = cases.filter(c => c.sol !== k.sol).slice(0, 3).map(c => c.sol);
+  // Ajout d'un piège : un seul signe (ex. oublier la solution négative)
+  if (k.a > 0 && Math.sqrt(k.a) % 1 === 0) {
+    distract[0] = `${Math.sqrt(k.a)} \\text{ uniquement}`;
+  }
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${k.sol}\\)`, correct: true },
+    ...distract.slice(0, 3).map(d => ({ html: `\\(${d}\\)`, correct: false }))
+  ]);
+  let sol;
+  if (k.a < 0) {
+    sol = `L'équation \\(x^2 = ${k.a}\\) n'a <b>aucune solution</b> : un carré est toujours positif ou nul.`;
+  } else if (k.a === 0) {
+    sol = `\\(x^2 = 0 \\iff x = 0\\). Solution unique : <b>0</b>.`;
+  } else {
+    const r = Math.sqrt(k.a);
+    sol = `\\(x^2 = ${k.a} \\iff x = ${r} \\text{ ou } x = -${r}\\). Solutions : <b>\\(-${r}\\) et \\(${r}\\)</b>.`;
+  }
+  return {
+    theme: 'algebre', title: 'Équation x² = a',
+    body: `Résoudre dans \\(\\mathbb{R}\\) : \\(x^2 = ${k.a}\\).`,
+    type: 'qcm', choices, correctIdx,
+    solution: sol,
+    help: {
+      cours: "Équation \\(x^2 = a\\) : <br>• si \\(a > 0\\) : <b>2 solutions</b>, \\(x = \\sqrt{a}\\) et \\(x = -\\sqrt{a}\\).<br>• si \\(a = 0\\) : <b>1 solution</b>, \\(x = 0\\).<br>• si \\(a < 0\\) : <b>aucune solution</b>.",
+      savoirFaire: "Reconnaître le cas (\\(a\\) positif, nul ou négatif), extraire la racine carrée, ne pas oublier la solution négative.",
+      erreurs: ["Oublier la solution négative.", "Dire que \\(x^2 = -4\\) a pour solution \\(-2\\) (faux : un carré ne peut pas être négatif).", "Diviser \\(a\\) par 2 au lieu de prendre la racine."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Opposé d'une expression — attendu Brevet 2025 p.3 :
+   "−(3x − 7) = −3x + 7"
+   ------------------------------------------------------------------ */
+function t3_oppose_expression() {
+  const cases = [
+    { expr: '3x - 7', opp: '-3x + 7' },
+    { expr: '5x + 2', opp: '-5x - 2' },
+    { expr: '-4x + 9', opp: '4x - 9' },
+    { expr: '-2x - 5', opp: '2x + 5' },
+    { expr: '7x - 1', opp: '-7x + 1' },
+    { expr: '-x + 8', opp: 'x - 8' },
+    { expr: '6 - 2x', opp: '-6 + 2x' },
+    { expr: '3 - 4x', opp: '-3 + 4x' }
+  ];
+  const k = pick(cases);
+  const distract = cases.filter(c => c.opp !== k.opp).slice(0, 3).map(c => c.opp);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${k.opp}\\)`, correct: true },
+    ...distract.map(d => ({ html: `\\(${d}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'algebre', title: 'Opposé d\'une expression',
+    body: `Supprime la parenthèse : \\(-(${k.expr}) = \\) ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: `\\(-(${k.expr}) = ${k.opp}\\) : tous les signes à l'intérieur de la parenthèse sont <b>changés</b>.`,
+    help: {
+      cours: "<b>Opposé d'une expression</b> : pour enlever un signe « − » devant une parenthèse, on change <b>tous les signes</b> à l'intérieur. Exemple : \\(-(3x - 7) = -3x + 7\\).",
+      savoirFaire: "Distribuer le \\(-1\\) à chaque terme : \\(-(a+b) = -a-b\\) ; \\(-(a-b) = -a+b\\).",
+      erreurs: ["Changer seulement le signe du premier terme.", "Oublier de changer le signe du nombre seul.", "Laisser la parenthèse sans changer les signes."]
     }
   };
 }
@@ -2190,6 +2450,111 @@ function t8_camembert() {
 }
 
 /* Calcul d'angle dans un camembert */
+/* ------------------------------------------------------------------
+   Histogramme — attendu Brevet 2025 p.4 :
+   "Il lit, interprète et représente des données sous forme
+   d'histogrammes pour des classes de même amplitude."
+   ------------------------------------------------------------------ */
+function svgHistogram(classes, effectifs, { title = '' } = {}) {
+  const W = 360, H = 230, padL = 42, padR = 12, padT = 28, padB = 42;
+  const gw = W - padL - padR, gh = H - padT - padB;
+  const maxEff = Math.max(...effectifs, 1);
+  const n = classes.length;
+  const barW = gw / n;
+  // Échelle Y : arrondir au multiple supérieur de 100 ou 200
+  const yMax = Math.ceil(maxEff / 200) * 200 || 200;
+  const yTicks = 5;
+  let bars = '';
+  effectifs.forEach((e, i) => {
+    const h = (e / yMax) * gh;
+    const x = padL + i * barW;
+    const y = H - padB - h;
+    bars += `<rect x="${x}" y="${y}" width="${barW - 1}" height="${h}" fill="#6366f1" stroke="#3730a3" stroke-width="1"/>`;
+    bars += `<text x="${x + barW/2}" y="${y - 4}" font-size="10" text-anchor="middle" fill="#333" font-weight="700">${e}</text>`;
+  });
+  let labels = '';
+  classes.forEach((c, i) => {
+    const x = padL + i * barW;
+    labels += `<text x="${x}" y="${H - padB + 13}" font-size="9" text-anchor="middle" fill="#555">${c[0]}</text>`;
+    if (i === n - 1) {
+      labels += `<text x="${x + barW}" y="${H - padB + 13}" font-size="9" text-anchor="middle" fill="#555">${c[1]}</text>`;
+    }
+  });
+  let ticks = '';
+  for (let t = 0; t <= yTicks; t++) {
+    const v = Math.round(yMax * t / yTicks);
+    const y = H - padB - (v / yMax) * gh;
+    ticks += `<line x1="${padL - 3}" y1="${y}" x2="${padL}" y2="${y}" stroke="#555" stroke-width="1"/>`;
+    ticks += `<text x="${padL - 6}" y="${y + 3}" font-size="9" text-anchor="end" fill="#555">${v}</text>`;
+  }
+  return `<div class="histogram-container"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="background:#fcfcfc;border:1px solid #ddd;border-radius:8px;">
+    ${title ? `<text x="${W/2}" y="16" font-size="11" text-anchor="middle" fill="#333" font-weight="700">${title}</text>` : ''}
+    ${ticks}
+    <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#333" stroke-width="1.2"/>
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#333" stroke-width="1.2"/>
+    ${bars}
+    ${labels}
+    <text x="${padL - 30}" y="${padT - 8}" font-size="9" fill="#555">Effectif</text>
+    <text x="${W - padR}" y="${H - padB + 30}" font-size="9" text-anchor="end" fill="#555">Âge</text>
+  </svg></div>`;
+}
+
+function t8_histogramme() {
+  const cases = [
+    {
+      context: "Une enquête porte sur l'âge auquel les personnes ont trouvé leur premier emploi qualifié. Les résultats sont présentés dans cet histogramme :",
+      classes: [[18, 22], [22, 26], [26, 30], [30, 34], [34, 38]],
+      effectifs: [100, 200, 400, 1100, 700],
+      questions: [
+        { q: "Combien de personnes ont trouvé leur emploi entre 26 et 30 ans ?", r: "400", type: 'input' },
+        { q: "Quelle est la classe avec le plus grand effectif ?", r: "[30 ; 34[", type: 'qcm', opts: ["[30 ; 34[", "[34 ; 38[", "[26 ; 30[", "[22 ; 26["] },
+        { q: "Quel est l'effectif total de l'enquête ?", r: "2500", type: 'input' },
+        { q: "Quelle est l'étendue des âges de l'enquête ?", r: "20", type: 'input', suffix: 'ans', explain: "L'étendue vaut \\(38 - 18 = 20\\) ans." }
+      ]
+    },
+    {
+      context: "Voici la répartition des élèves d'un collège selon leur taille (en cm) :",
+      classes: [[140, 150], [150, 160], [160, 170], [170, 180]],
+      effectifs: [80, 220, 180, 60],
+      questions: [
+        { q: "Combien d'élèves mesurent entre 150 cm et 160 cm ?", r: "220", type: 'input' },
+        { q: "Quel est l'effectif total ?", r: "540", type: 'input' },
+        { q: "Quelle est l'amplitude de chaque classe ?", r: "10", type: 'input', suffix: 'cm', explain: "Chaque classe a une amplitude de 10 cm (elles sont toutes de même largeur)." }
+      ]
+    }
+  ];
+  const k = pick(cases);
+  const q = pick(k.questions);
+  const histoSvg = svgHistogram(k.classes, k.effectifs);
+  const body = `${k.context}${histoSvg}${q.q}`;
+  if (q.type === 'qcm') {
+    const { choices, correctIdx } = makeQCM([
+      { html: q.r, correct: true },
+      ...q.opts.filter(o => o !== q.r).map(o => ({ html: o, correct: false }))
+    ]);
+    return {
+      theme: 'stats', title: 'Histogramme',
+      body, type: 'qcm', choices, correctIdx,
+      solution: q.explain || `La classe avec le plus grand bâton est <b>${q.r}</b>.`,
+      help: {
+        cours: "Un <b>histogramme</b> représente des données regroupées en <b>classes de même amplitude</b>. La hauteur de chaque rectangle est proportionnelle à l'effectif.",
+        savoirFaire: "Lire la hauteur du rectangle sur l'axe vertical pour retrouver l'effectif. Sommer les effectifs pour l'effectif total.",
+        erreurs: ["Confondre histogramme et diagramme en bâtons (ici les classes sont collées).", "Se tromper de classe.", "Mal lire l'axe vertical."]
+      }
+    };
+  }
+  return {
+    theme: 'stats', title: 'Histogramme',
+    body, type: 'input', expected: String(q.r), suffix: q.suffix || '',
+    solution: q.explain || `On lit directement la hauteur du rectangle correspondant : <b>${q.r}</b>${q.suffix ? ' ' + q.suffix : ''}.`,
+    help: {
+      cours: "Un <b>histogramme</b> représente des données regroupées en <b>classes de même amplitude</b>. La hauteur de chaque rectangle est proportionnelle à l'effectif.",
+      savoirFaire: "Lire la hauteur du rectangle sur l'axe vertical pour retrouver l'effectif. Pour l'effectif total, additionner tous les effectifs.",
+      erreurs: ["Confondre avec un diagramme en bâtons.", "Se tromper de classe.", "Oublier d'additionner pour l'effectif total."]
+    }
+  };
+}
+
 function t8_camembert_angle() {
   const cases = [
     { pct: 25, angle: 90 }, { pct: 50, angle: 180 },
@@ -2232,6 +2597,94 @@ function t8_frequence() {
       cours: "<b>Fréquence</b> d'une valeur = effectif / effectif total. S'exprime en décimal (entre 0 et 1) ou en pourcentage (×100).",
       savoirFaire: "Diviser l'effectif de la valeur par l'effectif total. Pour obtenir un pourcentage, multiplier par 100.",
       erreurs: ["Inverser numérateur et dénominateur.", "Oublier de convertir en % si demandé.", "Confondre fréquence et effectif."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Probabilité à 2 épreuves — attendu Brevet 2025 p.4-5 :
+   "À partir de dénombrements, il calcule des probabilités pour des
+   expériences aléatoires simples à 2 épreuves."
+   Méthode attendue : TABLEAU À DOUBLE ENTRÉE (l'arbre n'est pas exigé en 3ème)
+   ------------------------------------------------------------------ */
+function t8_proba_deux_epreuves() {
+  // Scénarios avec un tableau double entrée rendu en HTML
+  const cases = [
+    {
+      desc: "On lance <b>deux dés à 6 faces</b> et on s'intéresse à la <b>somme</b> des deux résultats.",
+      qLabel: "Quelle est la probabilité d'obtenir une somme égale à 7&nbsp;?",
+      // Tableau 6x6 des sommes ; 6 issues sur 36 donnent 7
+      total: 36, favorable: 6, frac: '\\dfrac{6}{36} = \\dfrac{1}{6}',
+      tableHtml: (() => {
+        let h = '<table class="proba-table"><thead><tr><th>+</th>';
+        for (let j = 1; j <= 6; j++) h += `<th>${j}</th>`;
+        h += '</tr></thead><tbody>';
+        for (let i = 1; i <= 6; i++) {
+          h += `<tr><th>${i}</th>`;
+          for (let j = 1; j <= 6; j++) {
+            const s = i + j;
+            h += `<td${s === 7 ? ' class="hit"' : ''}>${s}</td>`;
+          }
+          h += '</tr>';
+        }
+        return h + '</tbody></table>';
+      })(),
+      explain: "En coloriant les 7 dans le tableau : il y en a <b>6</b> sur <b>36</b> cases."
+    },
+    {
+      desc: "On lance <b>deux pièces équilibrées</b>.",
+      qLabel: "Quelle est la probabilité d'obtenir <b>deux faces</b> (F-F)&nbsp;?",
+      total: 4, favorable: 1, frac: '\\dfrac{1}{4}',
+      tableHtml: `<table class="proba-table"><thead><tr><th></th><th>P</th><th>F</th></tr></thead>
+        <tbody>
+          <tr><th>P</th><td>P-P</td><td>P-F</td></tr>
+          <tr><th>F</th><td>F-P</td><td class="hit">F-F</td></tr>
+        </tbody></table>`,
+      explain: "Les 4 issues équiprobables sont P-P, P-F, F-P, F-F. Une seule donne F-F."
+    },
+    {
+      desc: "On tire <b>successivement et avec remise</b> deux boules dans une urne contenant <b>1 boule bleue et 2 boules violettes</b>.",
+      qLabel: "Quelle est la probabilité de tirer <b>deux boules violettes</b>&nbsp;?",
+      total: 9, favorable: 4, frac: '\\dfrac{4}{9}',
+      tableHtml: `<table class="proba-table"><thead><tr><th>2<sup>e</sup>↓ / 1<sup>er</sup>→</th><th>B</th><th>V<sub>1</sub></th><th>V<sub>2</sub></th></tr></thead>
+        <tbody>
+          <tr><th>B</th><td>B-B</td><td>V<sub>1</sub>-B</td><td>V<sub>2</sub>-B</td></tr>
+          <tr><th>V<sub>1</sub></th><td>B-V<sub>1</sub></td><td class="hit">V<sub>1</sub>-V<sub>1</sub></td><td class="hit">V<sub>2</sub>-V<sub>1</sub></td></tr>
+          <tr><th>V<sub>2</sub></th><td>B-V<sub>2</sub></td><td class="hit">V<sub>1</sub>-V<sub>2</sub></td><td class="hit">V<sub>2</sub>-V<sub>2</sub></td></tr>
+        </tbody></table>`,
+      explain: "Les 9 issues équiprobables. Les 4 cases V-V (coloriées) sont les issues favorables."
+    },
+    {
+      desc: "Un couple souhaite avoir <b>deux enfants</b>. On suppose que la probabilité d'avoir une fille ou un garçon est la même.",
+      qLabel: "Quelle est la probabilité que le couple ait <b>deux garçons</b>&nbsp;?",
+      total: 4, favorable: 1, frac: '\\dfrac{1}{4}',
+      tableHtml: `<table class="proba-table"><thead><tr><th>2<sup>e</sup>↓ / 1<sup>er</sup>→</th><th>F</th><th>G</th></tr></thead>
+        <tbody>
+          <tr><th>F</th><td>F-F</td><td>G-F</td></tr>
+          <tr><th>G</th><td>F-G</td><td class="hit">G-G</td></tr>
+        </tbody></table>`,
+      explain: "Les 4 issues équiprobables : F-F, F-G, G-F, G-G. Une seule donne G-G."
+    }
+  ];
+  const k = pick(cases);
+  const pool = ['\\dfrac{1}{6}','\\dfrac{1}{4}','\\dfrac{1}{3}','\\dfrac{1}{2}','\\dfrac{2}{3}','\\dfrac{4}{9}','\\dfrac{1}{9}','\\dfrac{6}{36}'];
+  const distract = shuffle(pool.filter(x => x !== k.frac.split('=').pop().trim())).slice(0, 3);
+  const correctHtml = k.frac.includes('=')
+    ? k.frac.split('=').pop().trim()
+    : k.frac;
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${correctHtml}\\)`, correct: true },
+    ...distract.map(h => ({ html: `\\(${h}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'probas', title: 'Probabilité à 2 épreuves (tableau)',
+    body: `${k.desc}<br>${k.tableHtml}<br>${k.qLabel}`,
+    type: 'qcm', choices, correctIdx,
+    solution: `${k.explain} Donc \\(P = ${k.frac}\\).`,
+    help: {
+      cours: "Pour une expérience à <b>2 épreuves</b>, on dresse un <b>tableau à double entrée</b> qui liste toutes les issues équiprobables. Probabilité = nombre de cases favorables / nombre total de cases.",
+      savoirFaire: "1) Construire le tableau de toutes les issues. 2) Compter les cases favorables. 3) Simplifier la fraction.",
+      erreurs: ["Oublier des issues (ex. confondre \\(V_1 V_2\\) et \\(V_2 V_1\\)).", "Ne pas simplifier la fraction.", "Prendre le numérateur comme la probabilité."]
     }
   };
 }
@@ -2683,6 +3136,108 @@ function t11_aire_sphere() {
   };
 }
 
+/* ------------------------------------------------------------------
+   Repérage sur une sphère — attendu Brevet 2025 p.8 :
+   "Il se repère sur une sphère (latitude, longitude)."
+   ------------------------------------------------------------------ */
+function t11_lat_long() {
+  const cases = [
+    {
+      q: "Sur le globe terrestre, l'<b>équateur</b> est :",
+      a: "le grand cercle de latitude 0°",
+      opts: ["le grand cercle de latitude 0°", "le méridien de Greenwich", "le pôle Nord", "le tropique du Cancer"]
+    },
+    {
+      q: "Le <b>méridien de Greenwich</b> correspond à :",
+      a: "la longitude 0°",
+      opts: ["la longitude 0°", "la latitude 0°", "le pôle Sud", "l'équateur"]
+    },
+    {
+      q: "Un point sur Terre se repère par :",
+      a: "sa latitude et sa longitude",
+      opts: ["sa latitude et sa longitude", "son abscisse et son ordonnée", "son rayon et son angle", "sa hauteur et sa largeur"]
+    },
+    {
+      q: "Paris a pour coordonnées géographiques environ 48° N et 2° E. Que signifie « 48° N » ?",
+      a: "la latitude (au nord de l'équateur)",
+      opts: ["la latitude (au nord de l'équateur)", "la longitude (à l'est de Greenwich)", "l'altitude", "la distance au pôle Nord"]
+    },
+    {
+      q: "Les points <b>diamétralement opposés</b> sur une sphère de centre O sont :",
+      a: "deux points alignés avec O et situés sur la sphère",
+      opts: ["deux points alignés avec O et situés sur la sphère", "deux points sur le même méridien", "deux points à la même latitude", "deux points au pôle Nord et au pôle Sud uniquement"]
+    }
+  ];
+  const k = pick(cases);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.a, correct: true },
+    ...k.opts.filter(o => o !== k.a).map(o => ({ html: o, correct: false }))
+  ]);
+  return {
+    theme: 'espace', title: 'Repérage sur la sphère',
+    body: k.q,
+    type: 'qcm', choices, correctIdx,
+    solution: `La réponse attendue est : <b>${k.a}</b>.`,
+    help: {
+      cours: "Sur une <b>sphère</b> (ex. la Terre), un point se repère par deux coordonnées :<br>• la <b>latitude</b> (entre −90° et 90°, comptée depuis l'équateur),<br>• la <b>longitude</b> (entre −180° et 180°, comptée depuis le méridien de Greenwich).<br>L'équateur = latitude 0°. Greenwich = longitude 0°.",
+      savoirFaire: "Identifier d'abord la latitude (N/S), puis la longitude (E/O).",
+      erreurs: ["Confondre latitude (horizontale) et longitude (verticale).", "Oublier le sens N/S ou E/O.", "Croire que Greenwich est un lieu unique en dehors des méridiens."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Grandeurs composées — attendu Brevet 2025 p.7 :
+   "Il calcule avec des grandeurs mesurables, notamment composées
+   (débit en m³/s, vitesse en km/h...)."
+   ------------------------------------------------------------------ */
+function t11_grandeur_composee() {
+  const cases = [
+    {
+      q: "Un robinet a un débit de 5 L/min. Combien de litres coulent en 20 minutes ?",
+      r: "100", suffix: "L",
+      sol: "\\(5 \\text{ L/min} \\times 20 \\text{ min} = 100 \\text{ L}\\)."
+    },
+    {
+      q: "La Seine a un débit moyen de 300 m³/s sous un pont. Combien de m³ passent en 10 secondes ?",
+      r: "3000", suffix: "m³",
+      sol: "\\(300 \\text{ m}^3\\text{/s} \\times 10 \\text{ s} = 3000 \\text{ m}^3\\)."
+    },
+    {
+      q: "Un conducteur roule à 90 km/h. Quelle distance (en km) parcourt-il en 2 h ?",
+      r: "180", suffix: "km",
+      sol: "\\(90 \\text{ km/h} \\times 2 \\text{ h} = 180 \\text{ km}\\)."
+    },
+    {
+      q: "Un mobile se déplace à 5 m/s. Combien de mètres parcourt-il en 12 s ?",
+      r: "60", suffix: "m",
+      sol: "\\(5 \\text{ m/s} \\times 12 \\text{ s} = 60 \\text{ m}\\)."
+    },
+    {
+      q: "Un athlète court 100 m en 10 s. Quelle est sa vitesse en m/s ?",
+      r: "10", suffix: "m/s",
+      sol: "Vitesse = distance ÷ temps = \\(100 \\div 10 = 10\\) m/s."
+    },
+    {
+      q: "Une citerne de 1500 L se vide en 5 min. Quel est le débit en L/min ?",
+      r: "300", suffix: "L/min",
+      sol: "Débit = volume ÷ temps = \\(1500 \\div 5 = 300\\) L/min."
+    }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'mesures', title: 'Grandeurs composées (débit, vitesse)',
+    body: k.q,
+    type: 'input', expected: k.r, suffix: k.suffix,
+    solution: k.sol,
+    help: {
+      cours: "<b>Grandeurs composées</b> : elles associent deux unités (ex. km/h, m/s, m³/s, L/min).<br>• <b>Distance</b> = vitesse × temps<br>• <b>Volume</b> = débit × temps<br>• Pour isoler l'une des grandeurs, on divise.",
+      savoirFaire: "Bien écrire les unités et s'assurer qu'elles se simplifient (ex. km/h × h = km).",
+      erreurs: ["Mélanger les unités (min/s/h sans conversion).", "Multiplier au lieu de diviser.", "Oublier l'unité finale."]
+    }
+  };
+}
+
 // Identifier la nature d'une section
 function t11_section() {
   const cases = [
@@ -2708,6 +3263,105 @@ function t11_section() {
       cours: "Sections usuelles : cylindre (plan parallèle base) → disque ; cube/pavé (parallèle à une face) → carré/rectangle ; sphère (plan quelconque passant par l'intérieur) → disque ; cône (parallèle base) → disque.",
       savoirFaire: "Imaginer le plan qui coupe le solide, voir la forme laissée sur ce plan.",
       erreurs: ["Confondre disque et cercle.", "Penser que la section d'un cylindre est toujours un disque."]
+    }
+  };
+}
+
+/* ------------------------------------------------------------------
+   Volume d'un assemblage — attendu Brevet 2025 p.7 :
+   "Il calcule les volumes d'assemblages de solides étudiés au cours
+   du cycle." Exemple : cylindre surmonté d'une demi-boule.
+   ------------------------------------------------------------------ */
+function t11_volume_assemblage() {
+  // On choisit des valeurs qui donnent un résultat en kπ entier
+  const cases = [
+    // Cylindre + demi-boule de même rayon
+    // V_cyl = π r² h    V_demiboule = (2/3) π r³
+    { type: 'cyl_demiboule', r: 3, h: 5, detail: 'cylindre de rayon 3 cm et de hauteur 5 cm, surmonté d\'une demi-boule de même rayon' },
+    { type: 'cyl_demiboule', r: 2, h: 6, detail: 'cylindre de rayon 2 cm et de hauteur 6 cm, surmonté d\'une demi-boule de même rayon' },
+    { type: 'cyl_demiboule', r: 3, h: 10, detail: 'cylindre de rayon 3 cm et de hauteur 10 cm, surmonté d\'une demi-boule de même rayon' },
+    // Cylindre - 3 boules (volume restant)
+    { type: 'cyl_moins_boules', r: 5, h: 30, n: 3, detail: '3 boules identiques de rayon 5 cm placées dans une boîte cylindrique de rayon 5 cm et de hauteur 30 cm. Quel est le volume restant dans la boîte ?' },
+    // Cube + pyramide
+    { type: 'cube_pyramide', a: 6, h: 4, detail: 'cube d\'arête 6 cm surmonté d\'une pyramide de même base carrée et de hauteur 4 cm' }
+  ];
+  const k = pick(cases);
+  let vExpr, vValue, svgPic;
+  if (k.type === 'cyl_demiboule') {
+    // V_cyl = π r² h ; V_demiboule = (2/3) π r³
+    const cylCoef = k.r * k.r * k.h;
+    const halfBallCoef = (2 / 3) * k.r * k.r * k.r;
+    const total = cylCoef + halfBallCoef;
+    // On force un cas qui donne un résultat propre : 2r³/3 entier ⇒ r multiple de 3 ou r tel que 2r³ mult de 3
+    vExpr = `V = V_{\\text{cyl}} + V_{\\frac{1}{2}\\text{boule}} = \\pi \\times ${k.r}^2 \\times ${k.h} + \\dfrac{1}{2} \\times \\dfrac{4}{3}\\pi \\times ${k.r}^3 = ${cylCoef}\\pi + \\dfrac{${2 * k.r * k.r * k.r}}{3}\\pi`;
+    if (Number.isInteger(halfBallCoef)) {
+      vValue = `${total}\\pi`;
+      vExpr += ` = ${total}\\pi`;
+    } else {
+      // résultat en fraction
+      const num3 = cylCoef * 3 + 2 * k.r * k.r * k.r;
+      vValue = `\\dfrac{${num3}}{3}\\pi`;
+      vExpr += ` = \\dfrac{${num3}}{3}\\pi`;
+    }
+    svgPic = `<svg viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:10px auto;max-width:160px;">
+      <ellipse cx="80" cy="50" rx="40" ry="12" fill="#ddd6fe" stroke="#5b21b6" stroke-width="1.5"/>
+      <path d="M 40 50 A 40 40 0 0 1 120 50" fill="#c4b5fd" stroke="#5b21b6" stroke-width="1.5"/>
+      <line x1="40" y1="50" x2="40" y2="150" stroke="#5b21b6" stroke-width="1.5"/>
+      <line x1="120" y1="50" x2="120" y2="150" stroke="#5b21b6" stroke-width="1.5"/>
+      <ellipse cx="80" cy="150" rx="40" ry="12" fill="#ddd6fe" stroke="#5b21b6" stroke-width="1.5"/>
+      <path d="M 40 150 A 40 12 0 0 0 120 150" fill="none" stroke="#5b21b6" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <text x="135" y="100" font-size="11" fill="#5b21b6">${k.h} cm</text>
+      <text x="135" y="30" font-size="11" fill="#5b21b6">r = ${k.r}</text>
+    </svg>`;
+  } else if (k.type === 'cyl_moins_boules') {
+    const vCyl = k.r * k.r * k.h; // π × r² × h
+    const vBoule = (4 / 3) * k.r * k.r * k.r;
+    const total3 = 3 * vCyl - 3 * 4 * k.r * k.r * k.r;
+    vExpr = `V_{\\text{boîte}} = \\pi \\times ${k.r}^2 \\times ${k.h} = ${vCyl}\\pi \\text{ cm}^3. V_{3\\text{ boules}} = 3 \\times \\dfrac{4}{3}\\pi \\times ${k.r}^3 = ${4 * k.r * k.r * k.r}\\pi \\text{ cm}^3. V_{\\text{restant}} = ${vCyl}\\pi - ${4 * k.r * k.r * k.r}\\pi`;
+    vValue = `${vCyl - 4 * k.r * k.r * k.r}\\pi`;
+    vExpr += ` = ${vCyl - 4 * k.r * k.r * k.r}\\pi`;
+    svgPic = `<svg viewBox="0 0 140 240" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:10px auto;max-width:140px;">
+      <ellipse cx="70" cy="20" rx="40" ry="10" fill="#e0e7ff" stroke="#4338ca" stroke-width="1.5"/>
+      <line x1="30" y1="20" x2="30" y2="220" stroke="#4338ca" stroke-width="1.5"/>
+      <line x1="110" y1="20" x2="110" y2="220" stroke="#4338ca" stroke-width="1.5"/>
+      <ellipse cx="70" cy="220" rx="40" ry="10" fill="#e0e7ff" stroke="#4338ca" stroke-width="1.5"/>
+      <circle cx="70" cy="60" r="35" fill="#fbbf24" fill-opacity="0.4" stroke="#b45309" stroke-width="1.5"/>
+      <circle cx="70" cy="120" r="35" fill="#fbbf24" fill-opacity="0.4" stroke="#b45309" stroke-width="1.5"/>
+      <circle cx="70" cy="180" r="35" fill="#fbbf24" fill-opacity="0.4" stroke="#b45309" stroke-width="1.5"/>
+    </svg>`;
+  } else if (k.type === 'cube_pyramide') {
+    const vCube = k.a * k.a * k.a;
+    const vPyr = (1 / 3) * k.a * k.a * k.h;
+    const total = vCube + vPyr;
+    vExpr = `V_{\\text{cube}} = ${k.a}^3 = ${vCube} \\text{ cm}^3. V_{\\text{pyr}} = \\dfrac{1}{3} \\times ${k.a}^2 \\times ${k.h} = ${vPyr} \\text{ cm}^3. V_{\\text{total}} = ${vCube} + ${vPyr} = ${total}`;
+    vValue = `${total}`;
+    svgPic = `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:10px auto;max-width:200px;">
+      <polygon points="40,80 100,60 100,210 40,210 40,80" fill="#fce7f3" stroke="#be185d" stroke-width="1.5"/>
+      <polygon points="160,80 100,60 100,210 160,210 160,80" fill="#fbcfe8" stroke="#be185d" stroke-width="1.5"/>
+      <polygon points="40,80 100,60 160,80 100,100 40,80" fill="#f9a8d4" stroke="#be185d" stroke-width="1.5"/>
+      <polygon points="40,80 100,20 160,80" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+      <polygon points="100,20 160,80 100,100" fill="#fde68a" stroke="#b45309" stroke-width="1.5"/>
+      <line x1="40" y1="80" x2="100" y2="100" stroke="#be185d" stroke-width="1" stroke-dasharray="3 2"/>
+    </svg>`;
+  }
+  const body = k.type === 'cyl_moins_boules'
+    ? `${k.detail}${svgPic}Donne la valeur exacte (en fonction de \\(\\pi\\) si besoin).`
+    : `Quel est le volume exact de l'assemblage suivant : un ${k.detail} ?${svgPic}`;
+  const unit = k.type === 'cube_pyramide' ? 'cm³' : 'cm³';
+  const pool = ['20\\pi', '36\\pi', '75\\pi', '100\\pi', '63', '270', '500', '50\\pi', '40\\pi'];
+  const distract = shuffle(pool.filter(x => x !== vValue)).slice(0, 3);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${vValue}\\) ${unit}`, correct: true },
+    ...distract.map(d => ({ html: `\\(${d}\\) ${unit}`, correct: false }))
+  ]);
+  return {
+    theme: 'espace', title: 'Volume d\'un assemblage',
+    body, type: 'qcm', choices, correctIdx,
+    solution: `${vExpr} ${unit}.`,
+    help: {
+      cours: "Pour un <b>assemblage de solides</b>, on calcule <b>séparément</b> le volume de chaque partie, puis on <b>additionne</b> (ou on soustrait si on enlève de la matière).",
+      savoirFaire: "1) Identifier les solides qui composent l'assemblage. 2) Appliquer chaque formule de volume. 3) Additionner (ou soustraire) les résultats, en gardant la même unité.",
+      erreurs: ["Oublier le facteur 1/2 pour une demi-boule.", "Additionner des volumes dans des unités différentes.", "Oublier de soustraire quand il y a un trou ou un vide."]
     }
   };
 }
@@ -3040,10 +3694,10 @@ function t10_boucle_pour() {
    EXPORT : mappage thème → générateurs
    ========================================================================== */
 const QUESTION_BANK = {
-  calcul:       [ t1_priorites, t1_fraction_entier, t1_somme_fractions, t1_produit_fractions, t1_puissance, t1_puissance_10, t1_ecriture_sci, t1_op_ecriture_sci ],
+  calcul:       [ t1_priorites, t1_fraction_entier, t1_somme_fractions, t1_produit_fractions, t1_puissance, t1_puissance_10, t1_ecriture_sci, t1_op_ecriture_sci, t1_racine_carre_parfait, t1_racine_encadrement, t1_racine_arrondi ],
   arithmetique: [ t1_pgcd, t1_ppcm, t1_frac_irred, t1_divisibilite, t1_nombre_premier ],
-  pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion ],
-  algebre:    [ t3_equation, t3_developpe, t3_factoriser, t3_image, t3_equivalence_equation, t3_identite_remarquable, t3_equation_produit ],
+  pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion, t2_coef_multiplicateur, t2_coef_mult_application ],
+  algebre:    [ t3_equation, t3_developpe, t3_factoriser, t3_image, t3_equivalence_equation, t3_identite_remarquable, t3_equation_produit, t3_equation_x_carre, t3_oppose_expression ],
   fonctions:  [ t4_image_lineaire, t4_coefficient_lin, t4_fonction_affine, t4_lecture_graphique, t4_intersection_droites, t4_ab_graphique, t4_modelisation ],
   geometrie:  [
     t5_pythagore_hypotenuse, t5_pythagore_cote, t5_pythagore_reciproque,
@@ -3053,11 +3707,11 @@ const QUESTION_BANK = {
     t6_angles_complementaires, t6_cos_formule, t6_choisir_formule, t6_identifier_cote, t6_ecrire_rapport, t6_choix_formule_cote
   ],
   angles:     [ tA_somme_triangle, tA_supplementaires, tA_opposes_sommet, tA_alternes_correspondants ],
-  espace:     [ t9_volume_pave, t9_volume_cube, t11_volume_cylindre, t11_volume_cone, t11_volume_sphere, t11_volume_pyramide, t11_aire_sphere, t11_agrandissement_volume, t11_section ],
+  espace:     [ t9_volume_pave, t9_volume_cube, t11_volume_cylindre, t11_volume_cone, t11_volume_sphere, t11_volume_pyramide, t11_aire_sphere, t11_agrandissement_volume, t11_section, t11_volume_assemblage, t11_lat_long ],
   transformations: [ t7_identifier_transfo, t7_frise_transformation, t7_frise_image, t7_fraction_tour, t7_axes_symetrie, t7_conservation, t7_homothetie_aire, t7_sym_centrale_identite ],
-  stats:      [ t8_mediane, t8_moyenne, t8_etendue, t8_moy_effectifs, t8_frequence, t8_diagramme_batons, t8_camembert, t8_camembert_angle ],
-  probas:     [ t8_proba_simple, t8_proba_contraire, t8_proba_tableau, t8_proba_de ],
-  mesures:    [ t9_aire_rectangle, t9_aire_disque, t9_aire_carre, t9_conv_longueur, t9_conv_aire, t9_conv_volume, t9_arrondi ],
+  stats:      [ t8_mediane, t8_moyenne, t8_etendue, t8_moy_effectifs, t8_frequence, t8_diagramme_batons, t8_camembert, t8_camembert_angle, t8_histogramme ],
+  probas:     [ t8_proba_simple, t8_proba_contraire, t8_proba_tableau, t8_proba_de, t8_proba_deux_epreuves ],
+  mesures:    [ t9_aire_rectangle, t9_aire_disque, t9_aire_carre, t9_conv_longueur, t9_conv_aire, t9_conv_volume, t9_arrondi, t11_grandeur_composee ],
   algo:       [ t10_scratch_carre, t10_polygone_regulier, t10_scratch_calcul, t10_boucle_pour ]
 };
 
