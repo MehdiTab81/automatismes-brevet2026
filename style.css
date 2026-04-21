@@ -2490,3 +2490,233 @@ footer {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* ==========================================================================
+   Onglet "🧠 Compétences" — cartes, niveaux, calculatrice
+   ========================================================================== */
+
+/* Légende des niveaux */
+.skill-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 18px 0;
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  border-radius: 10px;
+  justify-content: center;
+}
+.skill-level-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.skill-level-badge.n1 { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.4); }
+.skill-level-badge.n2 { background: rgba(234, 179, 8, 0.18); color: #a16207; border: 1px solid rgba(234, 179, 8, 0.4); }
+.skill-level-badge.n3 { background: rgba(34, 197, 94, 0.18); color: #15803d; border: 1px solid rgba(34, 197, 94, 0.4); }
+.skill-level-badge.n4 { background: rgba(16, 185, 129, 0.22); color: #047857; border: 1px solid rgba(16, 185, 129, 0.5); }
+.skill-level-badge.n5 { background: rgba(30, 41, 59, 0.18); color: #1e293b; border: 1px solid rgba(30, 41, 59, 0.5); }
+body[data-theme="dark"] .skill-level-badge.n5 { color: #e2e8f0; border-color: #64748b; background: rgba(100,116,139,0.2); }
+body[data-theme="dark"] .skill-level-badge.n1 { color: #fca5a5; }
+body[data-theme="dark"] .skill-level-badge.n2 { color: #fde047; }
+
+/* Cartes de compétences */
+#skills-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+.skill-card {
+  background: var(--bg-elev);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all 200ms;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skill-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+.skill-card-head { display: flex; align-items: center; gap: 10px; }
+.skill-card-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.skill-card-title { font-weight: 700; font-size: 1.02rem; margin: 0; }
+.skill-card-desc { font-size: 0.85rem; color: var(--muted); margin: 0; line-height: 1.4; }
+.skill-card-stats {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.skill-mini-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--border);
+  border: 1.5px solid var(--border-strong);
+}
+.skill-mini-dot.done { background: #22c55e; border-color: #16a34a; }
+
+/* Page détail d'une compétence */
+#skill-detail {
+  animation: slideDown var(--t-mid) var(--ease);
+}
+.skill-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.skill-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+.skill-level-card {
+  padding: 14px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  text-align: center;
+  transition: all 200ms;
+  background: var(--bg-elev);
+}
+.skill-level-card:hover { transform: translateY(-2px); }
+.skill-level-card.n1 { border-color: rgba(239, 68, 68, 0.5); }
+.skill-level-card.n2 { border-color: rgba(234, 179, 8, 0.5); }
+.skill-level-card.n3 { border-color: rgba(34, 197, 94, 0.5); }
+.skill-level-card.n4 { border-color: rgba(16, 185, 129, 0.6); }
+.skill-level-card.n5 { border-color: rgba(30, 41, 59, 0.5); }
+.skill-level-card .lvl-title { font-weight: 700; margin-bottom: 4px; }
+.skill-level-card .lvl-sub { font-size: 0.78rem; color: var(--muted); }
+.skill-level-card .lvl-progress {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.skill-level-card .lvl-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 300ms;
+}
+.skill-level-card.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: transparent;
+}
+.skill-level-card.locked::before {
+  content: '🔒 ';
+}
+
+.skill-format-block {
+  background: var(--bg-elev);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin: 10px 0;
+  border-left: 4px solid var(--accent);
+}
+.skill-format-block h4 { margin: 0 0 8px 0; font-size: 1rem; }
+.skill-format-block p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.skill-format-block button { margin-top: 10px; }
+
+/* ==========================================================================
+   Calculatrice flottante
+   ========================================================================== */
+.calc-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  z-index: 9000;
+  transition: transform 200ms;
+}
+.calc-toggle:hover { transform: scale(1.1); }
+.calc-toggle[hidden] { display: none; }
+
+.calc-widget {
+  position: fixed;
+  right: 20px;
+  bottom: 86px;
+  width: 260px;
+  background: var(--card-bg, white);
+  border: 2px solid var(--border-strong);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  z-index: 9001;
+  padding: 10px;
+  animation: slideDown 200ms ease-out;
+}
+.calc-widget[hidden] { display: none; }
+.calc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.calc-title { font-weight: 700; font-size: 0.9rem; }
+.calc-close { padding: 2px 8px; font-size: 0.85rem; }
+.calc-display {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1.3rem;
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.calc-keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.calc-key {
+  padding: 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 100ms;
+}
+.calc-key:hover { background: var(--accent-soft); }
+.calc-key:active { transform: scale(0.95); }
+.calc-key.calc-op { background: var(--accent-soft); color: var(--accent); }
+.calc-key.calc-eq { background: var(--accent); color: white; grid-column: span 2; }
+.calc-key.calc-fn { background: var(--border); font-size: 0.85rem; }
+@media (max-width: 480px) {
+  .calc-widget { width: calc(100% - 24px); right: 12px; }
+}
