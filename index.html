@@ -114,7 +114,6 @@
   <section id="screen-home" class="screen active">
     <div class="menu-tabs">
       <button class="tab-btn active" data-target="tab-train">💪 S'entraîner</button>
-      <button class="tab-btn" data-target="tab-skills">🧠 Compétences</button>
       <button class="tab-btn" data-target="tab-eval">📝 S'évaluer</button>
       <button class="tab-btn" data-target="tab-parcours">🎯 Mon programme</button>
       <button class="tab-btn" data-target="tab-duel">⚔ Duel</button>
@@ -286,23 +285,6 @@
       <div id="duel-profiles"></div>
     </div>
 
-    <!-- Onglet : compétences (Raisonner, Représenter, Modéliser, Communiquer, Rédaction) -->
-    <div id="tab-skills" class="tab-panel">
-      <h2>🧠 Compétences</h2>
-      <p class="lead">En plus des <em>automatismes</em> (calculer rapidement), le Brevet évalue <strong>5 compétences</strong> : raisonner, représenter, modéliser, communiquer, rédiger.<br>Chaque exercice existe en <strong>5 niveaux</strong> — choisis celui qui te convient ou laisse-toi guider.</p>
-
-      <div class="skill-legend">
-        <div class="skill-level-badge n1">🔴 Découverte</div>
-        <div class="skill-level-badge n2">🟡 Apprentissage</div>
-        <div class="skill-level-badge n3">🟢 Confirmé</div>
-        <div class="skill-level-badge n4">💚 Maîtrise</div>
-        <div class="skill-level-badge n5">⚫ Expert</div>
-      </div>
-
-      <div id="skills-cards"></div>
-      <div id="skill-detail" style="display:none;"></div>
-    </div>
-
     <!-- Onglet : fiches de révision -->
     <div id="tab-revision" class="tab-panel">
       <h2>Fiches de révision</h2>
@@ -311,39 +293,6 @@
     </div>
   </section>
 
-  <!-- Calculatrice flottante (accessible sur écran test avec exos Compétences) -->
-  <button id="btn-calc-toggle" class="calc-toggle" title="Calculatrice" aria-label="Calculatrice" hidden>🧮</button>
-  <div id="calc-widget" class="calc-widget" hidden>
-    <div class="calc-header">
-      <span class="calc-title">🧮 Calculatrice</span>
-      <button class="icon-btn calc-close" id="btn-calc-close" aria-label="Fermer">✕</button>
-    </div>
-    <input type="text" id="calc-display" class="calc-display" readonly value="0" />
-    <div class="calc-keys">
-      <button class="calc-key calc-fn" data-k="AC">AC</button>
-      <button class="calc-key calc-fn" data-k="BS">←</button>
-      <button class="calc-key calc-fn" data-k="(">(</button>
-      <button class="calc-key calc-fn" data-k=")">)</button>
-      <button class="calc-key calc-fn" data-k="sqrt">√</button>
-      <button class="calc-key calc-fn" data-k="sq">x²</button>
-      <button class="calc-key" data-k="7">7</button>
-      <button class="calc-key" data-k="8">8</button>
-      <button class="calc-key" data-k="9">9</button>
-      <button class="calc-key calc-op" data-k="/">÷</button>
-      <button class="calc-key" data-k="4">4</button>
-      <button class="calc-key" data-k="5">5</button>
-      <button class="calc-key" data-k="6">6</button>
-      <button class="calc-key calc-op" data-k="*">×</button>
-      <button class="calc-key" data-k="1">1</button>
-      <button class="calc-key" data-k="2">2</button>
-      <button class="calc-key" data-k="3">3</button>
-      <button class="calc-key calc-op" data-k="-">−</button>
-      <button class="calc-key" data-k="0">0</button>
-      <button class="calc-key" data-k=".">,</button>
-      <button class="calc-key calc-op" data-k="+">+</button>
-      <button class="calc-key calc-eq" data-k="=">=</button>
-    </div>
-  </div>
 
   <!-- ÉCRAN TEST -->
   <section id="screen-test" class="screen">
