@@ -4301,12 +4301,440 @@ function tA_somme_quadrilatere() {
 }
 
 /* ==========================================================================
+   ENRICHISSEMENT 3ème — +19 générateurs (audit EMCP2, 2026-04-21)
+   Toutes questions : mental ou posé rapide, sans calculatrice.
+   ========================================================================== */
+
+/* --- Arithmétique (+3) --- */
+function e3_multiples_communs() {
+  const cases = [
+    { a: 6, b: 8, r: 24 },
+    { a: 4, b: 6, r: 12 },
+    { a: 9, b: 12, r: 36 },
+    { a: 10, b: 15, r: 30 },
+    { a: 3, b: 5, r: 15 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'arithmetique', title: 'Plus petit multiple commun',
+    body: `Quel est le plus petit entier (strictement positif) multiple de <b>${k.a}</b> et de <b>${k.b}</b> ?`,
+    type: 'input', expected: String(k.r),
+    solution: `Il s'agit du PPCM : \\(\\text{PPCM}(${k.a} ; ${k.b}) = ${k.r}\\).`,
+    help: {
+      cours: "Le PPCM de deux nombres est le plus petit multiple commun non nul. On peut lister les multiples de chacun jusqu'à trouver le premier commun.",
+      savoirFaire: "Lister multiples de chacun, s'arrêter au premier commun.",
+      erreurs: ["Prendre le produit a×b (pas toujours minimal).", "Confondre PGCD et PPCM.", "Oublier 'non nul'."]
+    }
+  };
+}
+
+function e3_diviseurs_communs() {
+  const cases = [
+    { a: 12, b: 18, list: '1, 2, 3, 6' },
+    { a: 20, b: 30, list: '1, 2, 5, 10' },
+    { a: 24, b: 36, list: '1, 2, 3, 4, 6, 12' },
+    { a: 8, b: 12, list: '1, 2, 4' }
+  ];
+  const k = pick(cases);
+  const pool = ['1, 2, 3, 6','1, 2, 5, 10','1, 2, 3, 4, 6, 12','1, 2, 4','1, 3, 5'];
+  const distract = shuffle(pool.filter(x => x !== k.list)).slice(0, 3);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.list, correct: true },
+    ...distract.map(d => ({ html: d, correct: false }))
+  ]);
+  return {
+    theme: 'arithmetique', title: 'Diviseurs communs',
+    body: `Quelle est la liste des diviseurs communs à <b>${k.a}</b> et <b>${k.b}</b> ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Les diviseurs communs sont les diviseurs du PGCD.`,
+    help: {
+      cours: "Les diviseurs communs à deux nombres sont exactement les diviseurs de leur PGCD.",
+      savoirFaire: "Calculer le PGCD puis lister ses diviseurs.",
+      erreurs: ["Oublier 1.", "Oublier le PGCD lui-même.", "Lister des diviseurs d'un seul des deux."]
+    }
+  };
+}
+
+function e3_critere_divisibilite() {
+  const cases = [
+    { n: 234, d: 9, ok: true, expl: "2+3+4 = 9, multiple de 9 → 234 = 9 × 26." },
+    { n: 234, d: 3, ok: true, expl: "2+3+4 = 9, multiple de 3 → oui." },
+    { n: 145, d: 5, ok: true, expl: "Termine par 5 → divisible par 5." },
+    { n: 123, d: 9, ok: false, expl: "1+2+3 = 6, pas multiple de 9." },
+    { n: 204, d: 4, ok: true, expl: "Les deux derniers chiffres 04 donnent 4, divisible par 4." },
+    { n: 145, d: 3, ok: false, expl: "1+4+5 = 10, pas multiple de 3." }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'arithmetique', title: 'Critère de divisibilité',
+    body: `Le nombre <b>${k.n}</b> est-il divisible par <b>${k.d}</b> ?`,
+    type: 'qcm',
+    choices: ['Oui', 'Non'],
+    correctIdx: k.ok ? 0 : 1,
+    solution: k.expl,
+    help: {
+      cours: "Critères : par 2 (termine par 0/2/4/6/8), par 3 (somme chiffres ÷3), par 5 (termine par 0/5), par 9 (somme chiffres ÷9), par 4 (deux derniers chiffres ÷4).",
+      savoirFaire: "Retenir les critères les plus utilisés.",
+      erreurs: ["Confondre critères par 3 et par 9.", "Oublier le critère par 4.", "Appliquer à tort somme chiffres pour 4."]
+    }
+  };
+}
+
+/* --- Pourcentages (+3) --- */
+function e3_coef_reciproque() {
+  const cases = [
+    { q: "Un prix baisse de 20 %. Quel est le coefficient à appliquer pour revenir au prix initial ?", r: '1,25' },
+    { q: "Un prix augmente de 25 %. Quel est le coefficient pour revenir au prix initial ?", r: '0,8' },
+    { q: "Un prix baisse de 50 %. Coefficient pour revenir au prix initial ?", r: '2' }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'pourcent', title: 'Coefficient réciproque',
+    body: k.q,
+    type: 'input', expected: [k.r, k.r.replace(',', '.')],
+    solution: `Le coefficient réciproque est \\(\\dfrac{1}{\\text{coef}}\\). Ex. baisse 20 % : coef = 0,8 ; réciproque = 1/0,8 = 1,25.`,
+    help: {
+      cours: "Un coefficient multiplicateur k se compense par son inverse 1/k pour revenir au prix initial.",
+      savoirFaire: "Écrire le coefficient (1 − p/100 ou 1 + p/100), puis prendre l'inverse.",
+      erreurs: ["Appliquer la même variation en sens opposé (20 % baisse puis 20 % hausse ≠ identité).", "Oublier l'inverse.", "Confondre diminuer et augmenter."]
+    }
+  };
+}
+
+function e3_pourcent_evolution() {
+  const cases = [
+    { d: 80, a: 100, r: '25' },
+    { d: 50, a: 60, r: '20' },
+    { d: 200, a: 150, r: '-25' },
+    { d: 40, a: 50, r: '25' },
+    { d: 120, a: 90, r: '-25' }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'pourcent', title: 'Taux d\'évolution',
+    body: `Un prix passe de <b>${k.d} €</b> à <b>${k.a} €</b>. Quel est le taux d'évolution (en %, signé) ?`,
+    type: 'input', expected: [k.r, k.r + ' %', k.r + '%'], suffix: '%',
+    solution: `Taux = \\(\\dfrac{V_{\\text{finale}} - V_{\\text{initiale}}}{V_{\\text{initiale}}} \\times 100\\) = ${k.r} %.`,
+    help: {
+      cours: "Taux d'évolution (en %) = (V_f − V_i) / V_i × 100. Négatif si diminution.",
+      savoirFaire: "Calculer l'écart, diviser par valeur initiale, multiplier par 100.",
+      erreurs: ["Diviser par V_f au lieu de V_i.", "Oublier le signe.", "Calculer la différence brute sans diviser."]
+    }
+  };
+}
+
+function e3_tva_rapide() {
+  const cases = [
+    { ht: 50, r: 60 },
+    { ht: 100, r: 120 },
+    { ht: 25, r: 30 },
+    { ht: 200, r: 240 },
+    { ht: 80, r: 96 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'pourcent', title: 'TVA à 20 %',
+    body: `Un article coûte <b>${k.ht} € HT</b>. Avec TVA à 20 %, quel est le prix TTC ?`,
+    type: 'input', expected: String(k.r), suffix: '€',
+    solution: `Prix TTC = HT × 1,2 = ${k.ht} × 1,2 = ${k.r} €.`,
+    help: {
+      cours: "Augmenter de 20 % ⇔ multiplier par 1,20. TVA à 20 % : TTC = HT × 1,2.",
+      savoirFaire: "Retenir les coefficients : +20 % → ×1,2 ; +5,5 % → ×1,055.",
+      erreurs: ["Ajouter 20 au lieu de 20 %.", "Multiplier par 0,2 seulement.", "Oublier d'ajouter le HT."]
+    }
+  };
+}
+
+/* --- Angles (+3) --- */
+function eA_adjacents_supplementaires() {
+  const cases = [
+    { a: 75, r: 105 },
+    { a: 110, r: 70 },
+    { a: 45, r: 135 },
+    { a: 60, r: 120 },
+    { a: 30, r: 150 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'angles', title: 'Angles adjacents et supplémentaires',
+    body: `Deux angles adjacents sont supplémentaires. L'un mesure <b>${k.a}°</b>. Quelle est la mesure de l'autre ?`,
+    type: 'input', expected: String(k.r), suffix: '°',
+    solution: `Supplémentaires : somme = 180°. Donc 180 − ${k.a} = ${k.r}°.`,
+    help: {
+      cours: "<b>Angles supplémentaires</b> : somme = 180°. <b>Angles complémentaires</b> : somme = 90°.",
+      savoirFaire: "Retenir 180° pour supplémentaires, 90° pour complémentaires.",
+      erreurs: ["Confondre supplémentaire et complémentaire.", "Utiliser 90°.", "Faire 360° − a."]
+    }
+  };
+}
+
+function eA_bissectrice() {
+  const cases = [
+    { a: 80, r: 40 },
+    { a: 100, r: 50 },
+    { a: 60, r: 30 },
+    { a: 90, r: 45 },
+    { a: 48, r: 24 }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'angles', title: 'Bissectrice d\'un angle',
+    body: `Une bissectrice partage un angle de <b>${k.a}°</b> en deux parties égales. Quelle est la mesure de chaque partie ?`,
+    type: 'input', expected: String(k.r), suffix: '°',
+    solution: `Bissectrice = partage en deux parties égales. ${k.a} ÷ 2 = ${k.r}°.`,
+    help: {
+      cours: "La <b>bissectrice</b> d'un angle partage cet angle en deux angles de même mesure.",
+      savoirFaire: "Diviser la mesure de l'angle par 2.",
+      erreurs: ["Confondre médiatrice et bissectrice.", "Multiplier par 2.", "Oublier que les deux moitiés sont égales."]
+    }
+  };
+}
+
+function eA_cercle_circonscrit() {
+  return {
+    theme: 'angles', title: 'Triangle rectangle et cercle',
+    body: "Dans un triangle rectangle, le centre du cercle circonscrit est :",
+    type: 'qcm',
+    choices: [
+      "Le milieu de l'hypoténuse",
+      "Le sommet de l'angle droit",
+      "Le centre de gravité",
+      "Aucun de ces points"
+    ],
+    correctIdx: 0,
+    solution: "Le centre du cercle circonscrit à un triangle rectangle est <b>le milieu de son hypoténuse</b>. Le rayon vaut donc la moitié de l'hypoténuse.",
+    help: {
+      cours: "<b>Propriété</b> : dans un triangle rectangle, le milieu de l'hypoténuse est équidistant des trois sommets ; c'est donc le centre du cercle circonscrit.",
+      savoirFaire: "Identifier l'hypoténuse (face à l'angle droit), prendre son milieu.",
+      erreurs: ["Placer le centre au sommet de l'angle droit.", "Confondre avec le cercle inscrit.", "Prendre un autre milieu."]
+    }
+  };
+}
+
+/* --- Stats (+2) --- */
+function e3_moyenne_ponderee() {
+  const cases = [
+    { s: "10 notes à 15 et 5 notes à 18", calc: "(10×15 + 5×18) / 15 = (150+90)/15 = 240/15", r: '16' },
+    { s: "8 notes à 12 et 4 notes à 18", calc: "(8×12 + 4×18)/12 = (96+72)/12 = 168/12", r: '14' },
+    { s: "6 notes à 10 et 4 notes à 15", calc: "(60+60)/10 = 120/10", r: '12' }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'stats', title: 'Moyenne pondérée',
+    body: `Une classe a eu ${k.s}. Quelle est la moyenne ?`,
+    type: 'input', expected: k.r,
+    solution: `Moyenne = \\(\\dfrac{\\sum n_i \\times x_i}{\\sum n_i}\\). Ici : ${k.calc} = ${k.r}.`,
+    help: {
+      cours: "Moyenne pondérée = somme des (effectif × valeur) / effectif total.",
+      savoirFaire: "Multiplier chaque valeur par son effectif, additionner, diviser par effectif total.",
+      erreurs: ["Faire la moyenne des deux valeurs (15+18)/2.", "Oublier de pondérer.", "Diviser par 2 au lieu de l'effectif total."]
+    }
+  };
+}
+
+function e3_comparer_series() {
+  return {
+    theme: 'stats', title: 'Comparer deux séries',
+    body: "Deux séries ont la même moyenne. Celle qui a la plus grande étendue est :",
+    type: 'qcm',
+    choices: [
+      "La plus dispersée",
+      "La plus homogène",
+      "La plus grande en effectif",
+      "Celle qui a la plus grande médiane"
+    ],
+    correctIdx: 0,
+    solution: "À moyenne égale, une <b>plus grande étendue</b> signifie que les valeurs sont <b>plus éloignées</b> les unes des autres : la série est plus <b>dispersée</b>.",
+    help: {
+      cours: "<b>Étendue</b> mesure la dispersion d'une série. Plus l'étendue est grande, plus les valeurs sont éloignées.",
+      savoirFaire: "Lien étendue ↔ dispersion ; moyenne ↔ position.",
+      erreurs: ["Confondre moyenne et étendue.", "Penser que même moyenne implique même série.", "Associer étendue à effectif."]
+    }
+  };
+}
+
+/* --- Probas (+4) --- */
+function e3_arbre_2issues() {
+  return {
+    theme: 'probas', title: 'Arbre à deux niveaux',
+    body: "On lance deux fois une pièce équilibrée. Quelle est la probabilité d'obtenir <b>deux Piles</b> ?",
+    type: 'qcm',
+    choices: ['\\(\\dfrac{1}{4}\\)', '\\(\\dfrac{1}{2}\\)', '\\(\\dfrac{1}{3}\\)', '\\(\\dfrac{1}{8}\\)'],
+    correctIdx: 0,
+    solution: "P(P puis P) = P(P) × P(P) = ½ × ½ = ¼. Sur l'arbre, on multiplie les probas le long d'une branche.",
+    help: {
+      cours: "Dans un arbre pondéré, la probabilité d'un chemin est le <b>produit</b> des probas le long de ses branches.",
+      savoirFaire: "Pour une succession indépendante, multiplier les probas.",
+      erreurs: ["Additionner au lieu de multiplier.", "Oublier que lancers indépendants.", "Confondre ¼ et ½."]
+    }
+  };
+}
+
+function e3_tableau_double() {
+  return {
+    theme: 'probas', title: 'Probabilité par tableau',
+    body: `Dans une classe de 30 élèves : 18 filles et 12 garçons. Parmi eux, 10 filles et 8 garçons portent des lunettes.<br>Quelle est la probabilité qu'un élève choisi au hasard soit une <b>fille avec lunettes</b> ?`,
+    type: 'qcm',
+    choices: ['\\(\\dfrac{10}{30}\\)', '\\(\\dfrac{10}{18}\\)', '\\(\\dfrac{18}{30}\\)', '\\(\\dfrac{10}{28}\\)'],
+    correctIdx: 0,
+    solution: "Nombre de filles avec lunettes = 10. Total = 30. Proba = 10/30 = 1/3.",
+    help: {
+      cours: "Proba d'un événement dans un tableau à double entrée = (effectif case) / (effectif total).",
+      savoirFaire: "Identifier l'intersection (ligne × colonne), diviser par le total général.",
+      erreurs: ["Diviser par un effectif partiel.", "Confondre filles et filles avec lunettes.", "Oublier de simplifier."]
+    }
+  };
+}
+
+function e3_complement_direct() {
+  const cases = [
+    { p: '0,15', r: '0,85' },
+    { p: '0,4', r: '0,6' },
+    { p: '0,25', r: '0,75' },
+    { p: '0,07', r: '0,93' },
+    { p: '0,6', r: '0,4' }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'probas', title: 'Probabilité du contraire',
+    body: `Si \\(P(A) = ${k.p}\\), que vaut \\(P(\\overline{A})\\) ?`,
+    type: 'input', expected: [k.r, k.r.replace(',', '.')],
+    solution: `\\(P(\\overline{A}) = 1 - P(A) = 1 - ${k.p} = ${k.r}\\).`,
+    help: {
+      cours: "Événement contraire : \\(P(\\overline{A}) = 1 - P(A)\\).",
+      savoirFaire: "Soustraire à 1.",
+      erreurs: ["Soustraire à 100 (confusion %).", "Donner P(A).", "Diviser par 2."]
+    }
+  };
+}
+
+function e3_proba_tirage_sac() {
+  const cases = [
+    { desc: "3 boules rouges et 5 boules bleues", target: 'rouge', r: '3/8' },
+    { desc: "2 boules blanches et 6 boules noires", target: 'blanche', r: '1/4' },
+    { desc: "4 rouges, 2 vertes et 4 jaunes", target: 'verte', r: '1/5' },
+    { desc: "7 billes bleues et 3 billes rouges", target: 'rouge', r: '3/10' }
+  ];
+  const k = pick(cases);
+  const pool = ['3/8','1/4','1/5','3/10','1/2','2/5'];
+  const toLx = s => { const [n,d]=s.split('/'); return `\\dfrac{${n}}{${d}}`; };
+  const distract = shuffle(pool.filter(x => x !== k.r)).slice(0, 3);
+  const { choices, correctIdx } = makeQCM([
+    { html: `\\(${toLx(k.r)}\\)`, correct: true },
+    ...distract.map(d => ({ html: `\\(${toLx(d)}\\)`, correct: false }))
+  ]);
+  return {
+    theme: 'probas', title: 'Tirage dans un sac',
+    body: `Un sac contient ${k.desc}. On tire une boule au hasard. Probabilité d'obtenir une boule <b>${k.target}</b> ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: `Proba = (nombre de boules de la couleur) / (total).`,
+    help: {
+      cours: "Situation équiprobable : P(E) = (nb de cas favorables) / (nb de cas possibles).",
+      savoirFaire: "Dénombrer les cas favorables, dénombrer le total, simplifier.",
+      erreurs: ["Oublier de simplifier.", "Ajouter au lieu de diviser.", "Mal compter le total."]
+    }
+  };
+}
+
+/* --- Mesures (+2) --- */
+function e3_debit_simple() {
+  const cases = [
+    { debit: '2 L/min', duree: '15 min', r: 30, unit: 'L' },
+    { debit: '3 L/min', duree: '10 min', r: 30, unit: 'L' },
+    { debit: '5 L/h', duree: '4 h', r: 20, unit: 'L' },
+    { debit: '0,5 L/s', duree: '40 s', r: 20, unit: 'L' }
+  ];
+  const k = pick(cases);
+  return {
+    theme: 'mesures', title: 'Débit et volume',
+    body: `Un robinet a un débit de <b>${k.debit}</b>. Quel volume obtient-on en <b>${k.duree}</b> ?`,
+    type: 'input', expected: String(k.r), suffix: k.unit,
+    solution: `Volume = débit × durée.`,
+    help: {
+      cours: "Débit = volume / durée. Donc volume = débit × durée (attention aux unités cohérentes).",
+      savoirFaire: "Multiplier la valeur du débit par la durée, en unités compatibles.",
+      erreurs: ["Diviser au lieu de multiplier.", "Unités incohérentes.", "Oublier l'unité du résultat."]
+    }
+  };
+}
+
+function e3_perimetre_cercle() {
+  const cases = [
+    { r: 5, pi: '10π' },
+    { r: 3, pi: '6π' },
+    { r: 7, pi: '14π' },
+    { r: 10, pi: '20π' },
+    { r: 2, pi: '4π' }
+  ];
+  const k = pick(cases);
+  const pool = ['10π','6π','14π','20π','4π','25π','12π'];
+  const distract = shuffle(pool.filter(x => x !== k.pi)).slice(0, 3);
+  const { choices, correctIdx } = makeQCM([
+    { html: k.pi + ' cm', correct: true },
+    ...distract.map(d => ({ html: d + ' cm', correct: false }))
+  ]);
+  return {
+    theme: 'mesures', title: 'Périmètre d\'un cercle (en fonction de π)',
+    body: `Un cercle a pour rayon <b>${k.r} cm</b>. Quel est son périmètre (en cm, en fonction de π) ?`,
+    type: 'qcm', choices, correctIdx,
+    solution: `P = 2π r = 2π × ${k.r} = ${k.pi} cm.`,
+    help: {
+      cours: "Périmètre d'un cercle : <b>P = 2πR = πD</b> (R rayon, D diamètre).",
+      savoirFaire: "Multiplier le rayon par 2π, ou le diamètre par π.",
+      erreurs: ["Oublier le 2.", "Confondre avec πR² (aire).", "Oublier π."]
+    }
+  };
+}
+
+/* --- Algo (+2) --- */
+function e3_trace_tantque() {
+  return {
+    theme: 'algo', title: 'Trace d\'une boucle Tant que',
+    body: `Quelle est la valeur de <b>x</b> à la fin de l'exécution ?<br><pre style="background:var(--bg-elev);padding:8px;border-radius:6px;font-size:0.88rem;">x ← 1\nTant que x &lt; 20 :\n    x ← x × 2</pre>`,
+    type: 'input', expected: '32',
+    solution: "x passe par 1, 2, 4, 8, 16 (on continue car 16 < 20), puis x ← 32. La condition 32 < 20 est fausse : on sort. Donc x = 32.",
+    help: {
+      cours: "Une boucle <b>Tant que</b> s'exécute TANT QUE la condition est vraie. On arrête dès qu'elle devient fausse.",
+      savoirFaire: "Dérouler mentalement, vérifier la condition à chaque itération.",
+      erreurs: ["S'arrêter à 16 (ne pas faire la dernière itération).", "Oublier que la condition est vérifiée avant.", "Confondre avec Répéter N fois."]
+    }
+  };
+}
+
+function e3_affectation() {
+  const cases = [
+    { desc: "x ← 5\\nx ← x + 3", r: '8' },
+    { desc: "x ← 10\\nx ← x - 2\\nx ← x × 3", r: '24' },
+    { desc: "y ← 4\\ny ← y × y", r: '16' },
+    { desc: "a ← 2\\nb ← a + 3\\na ← a × b", r: '10' }
+  ];
+  const k = pick(cases);
+  const body = `Quelle est la valeur de la dernière variable modifiée ?<br><pre style="background:var(--bg-elev);padding:8px;border-radius:6px;font-size:0.88rem;">${k.desc.replace(/\\n/g,'\n')}</pre>`;
+  return {
+    theme: 'algo', title: 'Affectations successives',
+    body,
+    type: 'input', expected: k.r,
+    solution: "Exécuter les affectations dans l'ordre, en remplaçant à chaque étape la variable par sa nouvelle valeur.",
+    help: {
+      cours: "Le symbole <b>←</b> signifie « prend la valeur de ». On évalue d'abord l'expression à droite, puis on affecte à gauche.",
+      savoirFaire: "Dérouler pas à pas en réécrivant à chaque ligne la valeur mise à jour.",
+      erreurs: ["Évaluer dans le mauvais sens.", "Oublier qu'une affectation écrase l'ancienne.", "Confondre = et ←."]
+    }
+  };
+}
+
+
+/* ==========================================================================
    EXPORT : mappage thème → générateurs
    ========================================================================== */
 const QUESTION_BANK = {
   calcul:       [ t1_priorites, t1_fraction_entier, t1_somme_fractions, t1_produit_fractions, t1_puissance, t1_puissance_10, t1_ecriture_sci, t1_op_ecriture_sci, t1_racine_carre_parfait, t1_racine_encadrement, t1_racine_arrondi ],
-  arithmetique: [ t1_pgcd, t1_ppcm, t1_frac_irred, t1_divisibilite, t1_nombre_premier, t1_decomposition_premiers, t1_probleme_pgcd ],
-  pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion, t2_coef_multiplicateur, t2_coef_mult_application, t2_evolutions_successives, t2_echelle_carte ],
+  arithmetique: [ t1_pgcd, t1_ppcm, t1_frac_irred, t1_divisibilite, t1_nombre_premier, t1_decomposition_premiers, t1_probleme_pgcd,
+    // Enrichissement EMCP2 2026-04-21
+    e3_multiples_communs, e3_diviseurs_communs, e3_critere_divisibilite ],
+  pourcent:   [ t2_pct_effectif, t2_pct_complement, t2_vitesse_temps, t2_quatrieme_prop, t2_conversion, t2_coef_multiplicateur, t2_coef_mult_application, t2_evolutions_successives, t2_echelle_carte,
+    // Enrichissement EMCP2 2026-04-21
+    e3_coef_reciproque, e3_pourcent_evolution, e3_tva_rapide ],
   algebre:    [ t3_equation, t3_developpe, t3_double_distrib, t3_factoriser, t3_factoriser_a2_b2, t3_image, t3_equivalence_equation, t3_identite_remarquable, t3_equation_produit, t3_equation_x_carre, t3_oppose_expression ],
   fonctions:  [ t4_image_lineaire, t4_coefficient_lin, t4_fonction_affine, t4_lecture_graphique, t4_intersection_droites, t4_ab_graphique, t4_modelisation, t4_antecedent_algebrique, t4_notation_fonction, t4_signe_a_b_allure ],
   geometrie:  [
@@ -4316,13 +4744,23 @@ const QUESTION_BANK = {
     t5_perimetre_losange, t5_angle_droit,
     t6_angles_complementaires, t6_cos_formule, t6_choisir_formule, t6_identifier_cote, t6_ecrire_rapport, t6_choix_formule_cote
   ],
-  angles:     [ tA_somme_triangle, tA_supplementaires, tA_opposes_sommet, tA_alternes_correspondants, tA_triangle_isocele, tA_somme_quadrilatere ],
+  angles:     [ tA_somme_triangle, tA_supplementaires, tA_opposes_sommet, tA_alternes_correspondants, tA_triangle_isocele, tA_somme_quadrilatere,
+    // Enrichissement EMCP2 2026-04-21
+    eA_adjacents_supplementaires, eA_bissectrice, eA_cercle_circonscrit ],
   espace:     [ t9_volume_pave, t9_volume_cube, t11_volume_cylindre, t11_volume_cone, t11_volume_sphere, t11_volume_pyramide, t11_aire_sphere, t11_agrandissement_volume, t11_section, t11_volume_assemblage, t11_lat_long ],
   transformations: [ t7_identifier_transfo, t7_frise_transformation, t7_frise_image, t7_fraction_tour, t7_axes_symetrie, t7_conservation, t7_homothetie_aire, t7_sym_centrale_identite ],
-  stats:      [ t8_mediane, t8_moyenne, t8_etendue, t8_moy_effectifs, t8_frequence, t8_diagramme_batons, t8_camembert, t8_camembert_angle, t8_histogramme ],
-  probas:     [ t8_proba_simple, t8_proba_contraire, t8_proba_tableau, t8_proba_de, t8_proba_deux_epreuves ],
-  mesures:    [ t9_aire_rectangle, t9_aire_disque, t9_aire_carre, t9_conv_longueur, t9_conv_aire, t9_conv_volume, t9_arrondi, t11_grandeur_composee ],
-  algo:       [ t10_scratch_carre, t10_polygone_regulier, t10_scratch_calcul, t10_boucle_pour, t10_condition_si, t10_variable_compteur, t10_evenement_drapeau, t10_bloc_perso ]
+  stats:      [ t8_mediane, t8_moyenne, t8_etendue, t8_moy_effectifs, t8_frequence, t8_diagramme_batons, t8_camembert, t8_camembert_angle, t8_histogramme,
+    // Enrichissement EMCP2 2026-04-21
+    e3_moyenne_ponderee, e3_comparer_series ],
+  probas:     [ t8_proba_simple, t8_proba_contraire, t8_proba_tableau, t8_proba_de, t8_proba_deux_epreuves,
+    // Enrichissement EMCP2 2026-04-21
+    e3_arbre_2issues, e3_tableau_double, e3_complement_direct, e3_proba_tirage_sac ],
+  mesures:    [ t9_aire_rectangle, t9_aire_disque, t9_aire_carre, t9_conv_longueur, t9_conv_aire, t9_conv_volume, t9_arrondi, t11_grandeur_composee,
+    // Enrichissement EMCP2 2026-04-21
+    e3_debit_simple, e3_perimetre_cercle ],
+  algo:       [ t10_scratch_carre, t10_polygone_regulier, t10_scratch_calcul, t10_boucle_pour, t10_condition_si, t10_variable_compteur, t10_evenement_drapeau, t10_bloc_perso,
+    // Enrichissement EMCP2 2026-04-21
+    e3_trace_tantque, e3_affectation ]
 };
 
 const THEME_META = {
